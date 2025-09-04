@@ -162,69 +162,54 @@
 
         addComponentButton.addEventListener('click', () => {
             console.log('Add Base Component button clicked');
-            // Add console event handlers to this function
             fetch('../Components/User Level/Components/Base User Component/Base User Component.html')
-                .then(response => {
-                    console.log('Fetch response received');
-                    return response.text();
-                })
+                .then(r => r.text())
                 .then(html => {
-                    console.log('HTML loaded:', html.substring(0, 100) + '...');
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = html;
-                    const component = tempDiv.querySelector('.base-user-component');
-                    if (component) {
-                        console.log('Component found, cloning...');
-                        // Clone to avoid issues
-                        const newComponent = component.cloneNode(true);
-                        newComponent.id = 'base-user-component_' + Date.now(); // Set unique id
-                        // Add styles if present
-                        const style = tempDiv.querySelector('style');
-                        if (style && !document.querySelector('style[data-component="base-user-component"]')) {
-                            style.setAttribute('data-component', 'base-user-component');
-                            document.head.appendChild(style);
-                            console.log('Styles added to head');
-                        }
-                        // Execute script if present
-                        const script = tempDiv.querySelector('script');
-                        if (script) {
-                            try {
-                                // Fetch the script content
-                                fetch('../Components/User Level/Components/Base User Component/Base User Component Select Behavior.js')
-                                    .then(response => response.text())
-                                    .then(scriptContent => {
-                                        eval(scriptContent);
-                                        console.log('Select behavior executed');
-                                    })
-                                    .catch(e => console.error('Error loading select script:', e));
-                                
-                                // Load move behavior
-                                fetch('../Components/User Level/Components/Base User Component/Base User Component Move Behavior.js')
-                                    .then(response => response.text())
-                                    .then(scriptContent => {
-                                        eval(scriptContent);
-                                        console.log('Move behavior executed');
-                                    })
-                                    .catch(e => console.error('Error loading move script:', e));
-                            } catch (e) {
-                                console.error('Error executing component script:', e);
-                            }
-                        }
-                        // Append to main canvas
-                        mainCanvas.appendChild(newComponent);
-                        // Make draggable
-                        newComponent.classList.add('draggable');
-                        newComponent.style.position = 'relative';
-                        newComponent.style.left = '220px';
-                        newComponent.style.top = '10px';
-                        newComponent.style.cursor = 'pointer';
-                        console.log('Base User Component instance added to canvas');
-                    } else {
-                        console.error('Component not found in HTML');
+                    const temp = document.createElement('div');
+                    temp.innerHTML = html;
+                    const component = temp.querySelector('.base-user-component');
+                    component.id = `base-user-component_${Date.now()}`;
+                    component.style.left = '220px';
+                    component.style.top = '10px';
+                    
+                    // Add styles if not already present
+                    const style = temp.querySelector('style');
+                    if (style && !document.querySelector('style[data-component="base-user-component"]')) {
+                        style.setAttribute('data-component', 'base-user-component');
+                        document.head.appendChild(style);
                     }
+                    
+                    mainCanvas.appendChild(component);
+                    
+                    // Load and execute behavior scripts
+                    loadComponentBehaviors(component.id);
+                    
+                    console.log('Base User Component instance added to canvas');
                 })
                 .catch(error => console.error('Error loading component:', error));
         });
+
+        function loadComponentBehaviors(componentId) {
+            const behaviors = [
+                'Base User Component Select Behavior.js',
+                'Base User Component Move Behavior.js',
+                'Base User Component Nesting Behavior.js'
+            ];
+            
+            behaviors.forEach(behavior => {
+                fetch(`../Components/User Level/Components/Base User Component/${behavior}`)
+                    .then(r => r.text())
+                    .then(script => {
+                        const modifiedScript = script.replace(
+                            'const component = document.querySelector(\'.base-user-component\');',
+                            `const component = document.getElementById('${componentId}');`
+                        );
+                        eval(modifiedScript);
+                        console.log(`${behavior} loaded for:`, componentId);
+                    })
+                    .catch(e => console.error(`Error loading ${behavior}:`, e));
+            });
+        }
 
         // Main Canvas
         const mainCanvas = document.createElement('div');
