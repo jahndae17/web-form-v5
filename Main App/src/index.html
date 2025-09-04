@@ -191,9 +191,11 @@
 
         function loadComponentBehaviors(componentId) {
             const behaviors = [
-                'Base User Component Select Behavior.js',
+                'Base User Component Selection Behavior.js',
                 'Base User Component Move Behavior.js',
+                'Base User Component Live Move Behavior.js',
                 'Base User Component Nesting Behavior.js',
+                'Base User Component Live Nesting Behavior.js',
                 'Base User Component Resize Behavior.js'
             ];
             
@@ -205,7 +207,7 @@
                             'const component = document.querySelector(\'.base-user-component\');',
                             `const component = document.getElementById('${componentId}');`
                         );
-                        // Also handle the resize behavior script which uses querySelectorAll
+                        // Also handle scripts which use querySelectorAll
                         modifiedScript = modifiedScript.replace(
                             'const components = document.querySelectorAll(\'.base-user-component\');',
                             `const components = [document.getElementById('${componentId}')];`
