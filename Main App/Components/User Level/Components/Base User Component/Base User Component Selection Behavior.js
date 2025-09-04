@@ -19,6 +19,8 @@
             const {liveMouse, inputs, state} = e.detail;
             handleComponentSelection(component, liveMouse, inputs, state);
         });
+
+
     });
 
     function handleComponentSelection(element, liveMouse, inputs, state) {
@@ -28,7 +30,6 @@
             Math.abs(liveMouse.totalDeltaX) + Math.abs(liveMouse.totalDeltaY) < 16 && 
             liveMouse.timeDiff < 99) {
             
-            console.log("Select operation - triggered by mouse down");
             clearAllSelections();
             inputs['selectedElementList'][element.id] = element;
             
@@ -42,7 +43,6 @@
                 window.EventsHandler.updateSelectedComponent(element);
             }
             
-            element.dispatchEvent(new CustomEvent('componentSelected'));
             console.log('Component selected:', element.id);
             return;
         }
@@ -152,4 +152,46 @@
 
     // Global helper for other behaviors to access
     window.clearAllSelections = clearAllSelections;
+
+    // Add global canvas click handler for deselection
+    document.addEventListener('handleCanvasInteraction', (e) => {
+        const {inputs, timeDiff} = e.detail;
+        handleCanvasDeselection(inputs, timeDiff);
+    });
+
+    // Add global mouse off handler for removing resize handles
+    document.addEventListener('handleMouseOff', (e) => {
+        const {inputs, state} = e.detail;
+        handleMouseOff(inputs, state);
+    });
+
+    function handleCanvasDeselection(inputs, timeDiff) {
+        // Get state from Events Handler API
+        const state = window.EventsHandler?.getState() || {};
+        
+        // Block deselection for 10ms after any operation completes
+        const shouldBlockDeselect = Date.now() - (state.lastResizeTime || 0) < 10 || 
+                                   Date.now() - (state.lastMoveTime || 0) < 10 || 
+                                   Date.now() - (state.lastNestTime || 0) < 10;
+        
+        if (timeDiff < 200 && !shouldBlockDeselect) {
+            // Clear selection list
+            clearAllSelections();
+            inputs['selectedElementList'] = {};
+        } else if (shouldBlockDeselect) {
+            // Deselection blocked - recent operation completed
+        }
+    }
+
+    function handleMouseOff(inputs, state) {
+        // Remove resize handles when mouse moves off components (but not during operations)
+        if (!state.isResizing && !state.isNesting) {
+            for (const key in inputs['selectedElementList']) {
+                const selectedElement = inputs['selectedElementList'][key];
+                if (selectedElement.classList.contains('base-user-component')) {
+                    selectedElement.dispatchEvent(new CustomEvent('removeResizeHandles'));
+                }
+            }
+        }
+    }
 })();

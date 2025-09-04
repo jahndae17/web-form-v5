@@ -16,25 +16,27 @@
 
         // Reactive event listeners - respond to Events Handler
         component.addEventListener('addResizeHandles', () => {
-            console.log('addResizeHandles event received for:', component.id);
             addResizeHandles(component);
         });
 
         component.addEventListener('removeResizeHandles', () => {
-            console.log('removeResizeHandles event received for:', component.id);
             removeResizeHandles(component);
         });
 
         component.addEventListener('resizeElement', (e) => {
-            console.log('resizeElement event received for:', component.id);
-            const {handle, deltaX, deltaY} = e.detail;
-            resizeElement(component, handle, deltaX, deltaY);
+            // Clean up the start position after resize completion
+            delete component.dataset.resizeStartPosition;
+            
+            console.log('Resize operation completed for:', component.id);
+            // Note: Resize already applied via live updates, no need to apply again
+            // const {handle, deltaX, deltaY} = e.detail;
+            // resizeElement(component, handle, deltaX, deltaY);
         });
 
-        // Live resize events
+        // Live resize events - FIX: Extract both handle and liveMouse
         component.addEventListener('liveResize', (e) => {
-            const liveMouse = e.detail;
-            updateLiveResize(component, liveMouse);
+            const {handle, liveMouse} = e.detail;
+            updateLiveResize(component, handle, liveMouse);
         });
 
         component.addEventListener('dragResizeComplete', (e) => {
@@ -90,66 +92,22 @@
         return cursors[handle];
     }
 
-    function resizeElement(element, handle, dx, dy) {
-        const rect = element.getBoundingClientRect();
-        const resizeOperations = {
-            'nw': () => {
-                element.style.width = `${rect.width - dx}px`;
-                element.style.height = `${rect.height - dy}px`;
-                element.style.top = `${rect.top + dy}px`;
-                element.style.left = `${rect.left + dx}px`;
-            },
-            'ne': () => {
-                element.style.width = `${rect.width + dx}px`;
-                element.style.height = `${rect.height - dy}px`;
-                element.style.top = `${rect.top + dy}px`;
-            },
-            'sw': () => {
-                element.style.width = `${rect.width - dx}px`;
-                element.style.height = `${rect.height + dy}px`;
-                element.style.left = `${rect.left + dx}px`;
-            },
-            'se': () => {
-                element.style.width = `${rect.width + dx}px`;
-                element.style.height = `${rect.height + dy}px`;
-            },
-            'n': () => {
-                element.style.height = `${rect.height - dy}px`;
-                element.style.top = `${rect.top + dy}px`;
-            },
-            's': () => {
-                element.style.height = `${rect.height + dy}px`;
-            },
-            'e': () => {
-                element.style.width = `${rect.width + dx}px`;
-            },
-            'w': () => {
-                element.style.width = `${rect.width - dx}px`;
-                element.style.left = `${rect.left + dx}px`;
-            }
-        };
-        
-        resizeOperations[handle]?.();
-        console.log('Element resized:', element.id, 'handle:', handle);
-    }
-
-    function updateLiveResize(element, liveMouse) {
-        // Get current state from Events Handler
-        const state = window.EventsHandler?.getState();
-        if (!state || !state.handle) return;
-
-        if (!state.resizeStartPosition) {
+    function updateLiveResize(element, handle, liveMouse) {
+        // Use element dataset to track start position (survives across calls)
+        if (!element.dataset.resizeStartPosition) {
             const rect = element.getBoundingClientRect();
-            state.resizeStartPosition = {
+            element.dataset.resizeStartPosition = JSON.stringify({
                 width: rect.width,
                 height: rect.height,
                 left: parseInt(element.style.left || 0),
                 top: parseInt(element.style.top || 0)
-            };
+            });
         }
         
-        // Apply live resize transformation based on handle using cumulative deltas
-        applyLiveResize(element, state.handle, liveMouse.deltaX, liveMouse.deltaY, state.resizeStartPosition);
+        const startPosition = JSON.parse(element.dataset.resizeStartPosition);
+        
+        // Use total deltas for cumulative resize effect
+        applyLiveResize(element, handle, liveMouse.totalDeltaX, liveMouse.totalDeltaY, startPosition);
     }
 
     function applyLiveResize(element, handle, deltaX, deltaY, startPosition) {

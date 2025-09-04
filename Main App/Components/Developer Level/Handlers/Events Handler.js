@@ -72,9 +72,9 @@ function handleOperations(liveMouse, completionMouse, inputs) {
         {condition: state.isResizing, action: () => state.resizingElement.dispatchEvent(new CustomEvent('resizeElement', {detail: {handle: state.handle, deltaX: completionMouse.deltaX, deltaY: completionMouse.deltaY}})), reset: 'resize'},
         // Nesting operation - dispatch completion to behavior
         {condition: state.isNesting, action: () => state.nestingElement.dispatchEvent(new CustomEvent('completeNesting', {detail: {completionMouse, inputs}})), reset: 'nesting'},
-        // Move operation // Lowest Priority - dispatch completion to behavior
+        // Move operation // Lowest Priority - just clean up move visuals
         {condition: state.isMoving && !state.isResizing && !state.isNesting, action: () => {
-            state.movingElement.dispatchEvent(new CustomEvent('dragMoveComplete', {detail: completionMouse}));
+            state.movingElement.dispatchEvent(new CustomEvent('cleanupMoveVisuals'));
         }, reset: 'move'}
     ];
 
