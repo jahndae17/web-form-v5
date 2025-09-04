@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Form App</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #mainContainer {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+        #sidebar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 200px;
+            height: 100%;
+            background-color: #f0f0f0;
+            padding: 10px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #mainCanvas {
+            flex: 1;
+            background-color: #fff;
+            padding: 10px;
+        }
+        #propertiesPanel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 200px;
+            height: 100%;
+            background-color: #f0f0f0;
+            padding: 10px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background-color: #a0a0a0;
+            padding: 10px;
+            text-align: left;
+        }
+        button {
+            position: absolute;
+            top: 10px;
+            width: 30px;
+            height: 30px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #333;
+            z-index: 10;
+            transition: left 0.3s ease-in-out, right 0.3s ease-in-out;
+        }
+        /* additional style for the toggle preview button concerning background, font, etc*/
+        #togglePreview {
+            background-color: #800080; /* purple */
+            color: #fff;
+            font-weight: bold;
+            font-size: 10px;
+            width: 60px;
+            height: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #000000; /* purple */
+        }
+        #toggleSidebar {
+            left: 20px;
+        }
+        #togglePanel {
+            right: 20px;
+        }
+        #togglePreview {
+            left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <button id="toggleSidebar">&#9776;</button>
+    <button id="togglePanel">&#9776;</button>
+    <button id="togglePreview">Edit</button>
+
+    <script src="../Components/Developer Level/Handlers/Events Handler.js"></script>
+    <script src="../Components/Developer Level/Handlers/Inputs Handler.js"></script>
+    <!-- <script src="../Components/User Level/Components/Base User Component/Base User Component Select Behavior.js"></script>
+    <script src="../Components/User Level/Components/Base User Component/Base User Component Move Behavior.js"></script>
+    <script src="../Components/User Level/Components/Base User Component/Base User Component Resize Behavior.js"></script> -->
+    <script>
+        const togglePreview = document.getElementById('togglePreview');
+
+        // Load handler data from JSON file
+        fetch('../Components/Developer Level/Registers/Handler Data.json')
+            .then(response => response.json())
+            .then(fetchedData => {
+                window.handlerData = fetchedData;
+                document.addEventListener('mousedown', (e) => handleMousedown(e));
+                document.addEventListener('mousemove', (e) => handleMouseMove(e));
+                document.addEventListener('mouseup', (e) => handleMouseUp(e));
+
+                const mode = fetchedData['shared handler data'][0]['selectedMode'];
+                console.log('Handler data loaded, mode:', mode);
+                window.appMode = mode;
+                window.controlLock = fetchedData['shared handler data'][0]['inputs']['control lock'];
+                // Set initial state based on mode
+                if (mode === 'edit') {
+                    sidebar.style.transform = 'translateX(0%)';
+                    propertiesPanel.style.transform = 'translateX(100%)';
+                    document.getElementById('toggleSidebar').style.left = '220px';
+                    document.getElementById('togglePanel').style.right = '20px';
+                    togglePreview.textContent = 'Edit';
+                    togglePreview.style.backgroundColor = '#800080';
+                } else if (mode === 'preview') {
+                    sidebar.style.transform = 'translateX(-100%)';
+                    propertiesPanel.style.transform = 'translateX(100%)';
+                    document.getElementById('toggleSidebar').style.left = '20px';
+                    document.getElementById('togglePanel').style.right = '20px';
+                    togglePreview.textContent = 'Preview';
+                    togglePreview.style.backgroundColor = '#0000FF';
+                }
+            })
+            .catch(error => console.error('Error loading handler data:', error));
+
+        const mainContainer = document.createElement('div');
+        mainContainer.id = 'mainContainer';
+
+        // Sidebar
+        const sidebar = document.createElement('div');
+        sidebar.id = 'sidebar';
+        mainContainer.appendChild(sidebar);
+        // Vertical gallery for tools
+        const toolGallery = document.createElement('div');
+        toolGallery.id = 'toolGallery';
+        toolGallery.style.display = 'flex';
+        toolGallery.style.flexDirection = 'column';
+        toolGallery.style.gap = '5px';
+        sidebar.appendChild(toolGallery);
+        toolGallery.appendChild(document.createElement('h3')).textContent = 'Toolbar';
+
+        // Add button to create Base User Component instance
+        const addComponentButton = document.createElement('button');
+        addComponentButton.textContent = 'Add Base Component';
+        addComponentButton.style.position = 'static';
+        addComponentButton.style.width = '100%';
+        addComponentButton.style.padding = '5px';
+        addComponentButton.style.margin = '5px 0';
+        addComponentButton.style.backgroundColor = '#c0c0c0';
+        addComponentButton.style.borderRadius = '5px';
+        addComponentButton.style.fontSize = '12px';
+        toolGallery.appendChild(addComponentButton);
+
+        addComponentButton.addEventListener('click', () => {
+            console.log('Add Base Component button clicked');
+            // Add console event handlers to this function
+            fetch('../Components/User Level/Components/Base User Component/Base User Component.html')
+                .then(response => {
+                    console.log('Fetch response received');
+                    return response.text();
+                })
+                .then(html => {
+                    console.log('HTML loaded:', html.substring(0, 100) + '...');
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const component = tempDiv.querySelector('.base-user-component');
+                    if (component) {
+                        console.log('Component found, cloning...');
+                        // Clone to avoid issues
+                        const newComponent = component.cloneNode(true);
+                        newComponent.id = 'base-user-component_' + Date.now(); // Set unique id
+                        // Add styles if present
+                        const style = tempDiv.querySelector('style');
+                        if (style && !document.querySelector('style[data-component="base-user-component"]')) {
+                            style.setAttribute('data-component', 'base-user-component');
+                            document.head.appendChild(style);
+                            console.log('Styles added to head');
+                        }
+                        // Execute script if present
+                        const script = tempDiv.querySelector('script');
+                        if (script) {
+                            try {
+                                // Fetch the script content
+                                fetch('../Components/User Level/Components/Base User Component/Base User Component Select Behavior.js')
+                                    .then(response => response.text())
+                                    .then(scriptContent => {
+                                        eval(scriptContent);
+                                        console.log('Select behavior executed');
+                                    })
+                                    .catch(e => console.error('Error loading select script:', e));
+                                
+                                // Load move behavior
+                                fetch('../Components/User Level/Components/Base User Component/Base User Component Move Behavior.js')
+                                    .then(response => response.text())
+                                    .then(scriptContent => {
+                                        eval(scriptContent);
+                                        console.log('Move behavior executed');
+                                    })
+                                    .catch(e => console.error('Error loading move script:', e));
+                            } catch (e) {
+                                console.error('Error executing component script:', e);
+                            }
+                        }
+                        // Append to main canvas
+                        mainCanvas.appendChild(newComponent);
+                        // Make draggable
+                        newComponent.classList.add('draggable');
+                        newComponent.style.position = 'relative';
+                        newComponent.style.left = '220px';
+                        newComponent.style.top = '10px';
+                        newComponent.style.cursor = 'pointer';
+                        console.log('Base User Component instance added to canvas');
+                    } else {
+                        console.error('Component not found in HTML');
+                    }
+                })
+                .catch(error => console.error('Error loading component:', error));
+        });
+
+        // Main Canvas
+        const mainCanvas = document.createElement('div');
+        mainCanvas.id = 'mainCanvas';
+        mainCanvas.style.flex = '1';
+        mainCanvas.dataset.component = 'main';
+        mainContainer.appendChild(mainCanvas);
+
+        // Properties Panel
+        const propertiesPanel = document.createElement('div');
+        propertiesPanel.id = 'propertiesPanel';
+        propertiesPanel.textContent = 'Properties Panel';
+        propertiesPanel.style.fontWeight = 'bold';
+        mainContainer.appendChild(propertiesPanel);
+
+        // Footer
+        const footer = document.createElement('div');
+        footer.id = 'footer';
+        footer.style.fontWeight = 'bold';
+        mainContainer.appendChild(footer);
+        footer.appendChild(togglePreview); // Move togglePreview to footer
+
+        // Append to body
+        document.body.appendChild(mainContainer);
+
+        // Toggle functions
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            const current = getComputedStyle(sidebar).transform;
+            const isVisible = current === 'matrix(1, 0, 0, 1, 0, 0)';
+            sidebar.style.transform = isVisible ? 'translateX(-100%)' : 'translateX(0%)';
+            // Position button based on sidebar state
+            const toggleButton = document.getElementById('toggleSidebar');
+            toggleButton.style.left = isVisible ? '20px' : '220px';
+        });
+
+        document.getElementById('togglePanel').addEventListener('click', () => {
+            const current = getComputedStyle(propertiesPanel).transform;
+            const isVisible = current === 'matrix(1, 0, 0, 1, 0, 0)';
+            propertiesPanel.style.transform = isVisible ? 'translateX(100%)' : 'translateX(0%)';
+            // Position button based on panel state
+            const toggleButton = document.getElementById('togglePanel');
+            toggleButton.style.right = isVisible ? '20px' : '220px';
+        });
+
+        document.getElementById('togglePreview').addEventListener('click', () => {
+            if (window.appMode === 'Edit') {
+                window.appMode = 'Preview';
+                togglePreview.style.backgroundColor = '#0000FF'; //blue
+                togglePreview.textContent = 'Preview';
+            } else {
+                window.appMode = 'Edit';
+                togglePreview.style.backgroundColor = '#800080'; //purple
+                togglePreview.textContent = 'Edit';
+            }
+        });
+    </script>
+</body>
+</html>

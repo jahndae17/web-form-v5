@@ -1,0 +1,53 @@
+{
+    "shared handler data": [
+        {
+            "app states": ["edit", "preview"],
+            "selectedMode": "edit",
+            "context": {
+                "now":{
+                    "element": "",
+                    "component type": "",
+                    "x": 0,
+                    "y": 0,
+                    "time": ""
+                },
+                "on last mouse down": {
+                    "element": "",
+                    "component type": "",
+                    "x": 0,
+                    "y": 0,
+                    "time": ""
+                },
+                "on last mouse up": {
+                    "element": "",
+                    "component type": "",
+                    "x": 0,
+                    "y": 0,
+                    "time": ""
+                }
+            },
+            "inputs": {
+                "drag": {
+                    "enabled": true,
+                    "isDragging": false,
+                    "initialX": 0,
+                    "initialY": 0,
+                    "deltaX": 0,
+                    "deltaY": 0
+                },
+                "resize": {
+                    "enabled": true,
+                    "isResizing": false,
+                    "handle": "",
+                    "initialX": 0,
+                    "initialY": 0,
+                    "initialWidth": 0,
+                    "initialHeight": 0,
+                    "deltaX": 0,
+                    "deltaY": 0
+                },
+                "selectedElementList": {}
+            }
+        }
+    ]
+}
