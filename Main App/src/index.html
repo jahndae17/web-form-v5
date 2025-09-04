@@ -193,16 +193,22 @@
             const behaviors = [
                 'Base User Component Select Behavior.js',
                 'Base User Component Move Behavior.js',
-                'Base User Component Nesting Behavior.js'
+                'Base User Component Nesting Behavior.js',
+                'Base User Component Resize Behavior.js'
             ];
             
             behaviors.forEach(behavior => {
                 fetch(`../Components/User Level/Components/Base User Component/${behavior}`)
                     .then(r => r.text())
                     .then(script => {
-                        const modifiedScript = script.replace(
+                        let modifiedScript = script.replace(
                             'const component = document.querySelector(\'.base-user-component\');',
                             `const component = document.getElementById('${componentId}');`
+                        );
+                        // Also handle the resize behavior script which uses querySelectorAll
+                        modifiedScript = modifiedScript.replace(
+                            'const components = document.querySelectorAll(\'.base-user-component\');',
+                            `const components = [document.getElementById('${componentId}')];`
                         );
                         eval(modifiedScript);
                         console.log(`${behavior} loaded for:`, componentId);

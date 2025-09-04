@@ -2,29 +2,12 @@
 let state = {
     isResizing: false, isMoving: false, isNesting: false, handle: '', 
     resizingElement: null, movingElement: null, nestingElement: null,
-    lastResizeTime: 0, lastMoveTime: 0, lastNestTime: 0, functionsLoaded: false
+    lastResizeTime: 0, lastMoveTime: 0, lastNestTime: 0
 };
-let resizeElement, addResizeHandles, removeResizeHandles;
-
-// Load resize functions once at startup
-loadBehavior().then(() => state.functionsLoaded = true);
-
-function loadBehavior() {
-    return fetch('../Components/User Level/Components/Base User Component/Base User Component Resize Behavior.js')
-        .then(response => response.text())
-        .then(script => {
-            eval(script);
-            window.resizeElement = resizeElement;
-            window.addResizeHandles = addResizeHandles;
-            window.removeResizeHandles = removeResizeHandles;
-            console.log('Resize functions loaded');
-        })
-        .catch(error => console.error('Error loading resize behavior:', error));
-}
 
 // Control flow to choose whether a select, resize, move, or no operation is being performed based on Main App\Components\Developer Level\Registers\Handler Data.json (updated by other handlers)
 setInterval(() => {
-    if (!window.handlerData || !state.functionsLoaded) return;
+    if (!window.handlerData) return;
     
     const {context, inputs} = window.handlerData['shared handler data'][0];
     const mouse = {
@@ -41,33 +24,38 @@ setInterval(() => {
 }, 100);
 
 function handleOperations(mouse, inputs) {
-    // Complete nesting operations (highest priority)
-    if (state.isNesting && !mouse.isDragging && mouse.timeDiff < 200) {
-        handleNestingCompletion(state.nestingElement, mouse, inputs);
-        resetState('nesting');
-    }
-    
-    // Complete resize/move operations
-    if (state.isResizing && !mouse.isDragging && mouse.timeDiff < 200) {
-        window.resizeElement(state.resizingElement, state.handle, mouse.deltaX, mouse.deltaY);
-        resetState('resize');
-    }
-    
-    if (state.isMoving && !mouse.isDragging && mouse.timeDiff < 200 && !state.isResizing && !state.isNesting) {
-        state.movingElement.dispatchEvent(new CustomEvent('dragMove', {detail: mouse}));
-        resetState('move');
+    // Consolidated completion check
+    const completionChecks = [
+        // Resizing operation // Highest Priority
+        {condition: state.isResizing, action: () => state.resizingElement.dispatchEvent(new CustomEvent('resizeElement', {detail: {handle: state.handle, deltaX: mouse.deltaX, deltaY: mouse.deltaY}})), reset: 'resize'},
+        // Nesting operation
+        {condition: state.isNesting, action: () => handleNestingCompletion(state.nestingElement, mouse, inputs), reset: 'nesting'},
+        // Move operation // Lowest Priority
+        {condition: state.isMoving && !state.isResizing && !state.isNesting, action: () => state.movingElement.dispatchEvent(new CustomEvent('dragMove', {detail: mouse})), reset: 'move'}
+    ];
+
+    // Execute first matching completion
+    if (!mouse.isDragging && mouse.timeDiff < 200) {
+        const activeOperation = completionChecks.find(op => op.condition);
+        if (activeOperation) {
+            activeOperation.action();
+            resetState(activeOperation.reset);
+            return;
+        }
     }
 
     // Handle current element interactions
-    if (mouse.element?.classList.contains('base-user-component')) {
-        handleComponent(mouse.element, mouse, inputs);
-    } else if (mouse.element?.classList.contains('resize-handle')) {
-        handleResizeHandle(mouse.element, mouse, inputs);
-    } else if (mouse.element?.id === 'mainCanvas') {
-        handleDeselect(inputs, mouse.timeDiff);
-    } else {
-        handleMouseOff(inputs);
-    }
+    const elementHandlers = {
+        'base-user-component': () => handleComponent(mouse.element, mouse, inputs),
+        'resize-handle': () => handleResizeHandle(mouse.element, mouse, inputs),
+        'mainCanvas': () => handleDeselect(inputs, mouse.timeDiff)
+    };
+
+    const handlerKey = mouse.element?.classList?.contains('base-user-component') ? 'base-user-component' :
+                      mouse.element?.classList?.contains('resize-handle') ? 'resize-handle' :
+                      mouse.element?.id === 'mainCanvas' ? 'mainCanvas' : null;
+
+    handlerKey ? elementHandlers[handlerKey]() : handleMouseOff(inputs);
 }
 
 function resetState(type) {
@@ -93,31 +81,41 @@ function handleComponent(element, mouse, inputs) {
         return;
     }
 
-    // Only allow resize/move operations on selected elements
-    if (!inputs['selectedElementList'][element.id]) {
-        return; // Element must be selected for resize/move operations
-    }
+    // Only allow operations on selected elements
+    if (!inputs['selectedElementList'][element.id]) return;
 
-    // Handle resize handles and operations
-    const rect = element.getBoundingClientRect();
-    const nearLeft = mouse.x < rect.left + 20;
-    const nearRight = mouse.x > rect.right - 20;
-    const nearTop = mouse.y < rect.top + 20;
-    const nearBottom = mouse.y > rect.bottom - 20;
-    const isNearEdge = nearLeft || nearRight || nearTop || nearBottom;
-
-    if (isNearEdge) {
-        window.addResizeHandles(element);
-        if (mouse.isDragging && !state.isResizing && !state.isNesting) startResize(element, nearLeft, nearRight, nearTop, nearBottom, inputs);
-    } else {
-        window.removeResizeHandles(element);
-        // Check for nesting first (higher priority than move)
-        if (mouse.isDragging && !state.isResizing && !state.isMoving && !state.isNesting && element.classList.contains('isNestable')) {
+    // Edge detection helper
+    const edges = getEdgeInfo(element, mouse);
+    
+    // Handle resize handles
+    element.dispatchEvent(new CustomEvent(edges.isNearEdge ? 'addResizeHandles' : 'removeResizeHandles'));
+    
+    // Handle drag operations
+    if (mouse.isDragging && !state.isResizing && !state.isNesting) {
+        if (edges.isNearEdge) {
+            startResize(element, edges, inputs);
+        } else if (element.classList.contains('isNestable') && !state.isMoving) {
             startNesting(element, inputs);
-        } else if (mouse.isDragging && !state.isResizing && !state.isMoving && !state.isNesting) {
+        } else if (!state.isMoving) {
             startMove(element, inputs);
         }
     }
+}
+
+// Helper function for edge detection
+function getEdgeInfo(element, mouse) {
+    const rect = element.getBoundingClientRect();
+    const threshold = 10;
+    
+    const nearLeft = mouse.x < rect.left + threshold;
+    const nearRight = mouse.x > rect.right - threshold;
+    const nearTop = mouse.y < rect.top + threshold;
+    const nearBottom = mouse.y > rect.bottom - threshold;
+    
+    return {
+        nearLeft, nearRight, nearTop, nearBottom,
+        isNearEdge: nearLeft || nearRight || nearTop || nearBottom
+    };
 }
 
 function handleResizeHandle(handle, mouse, inputs) {
@@ -129,15 +127,12 @@ function handleResizeHandle(handle, mouse, inputs) {
         return; // Element must be selected for resize/move operations
     }
 
-    const rect = parentComponent.getBoundingClientRect();
-    const nearLeft = mouse.x < rect.left + 20;
-    const nearRight = mouse.x > rect.right - 20;
-    const nearTop = mouse.y < rect.top + 20;
-    const nearBottom = mouse.y > rect.bottom - 20;
-
     if (mouse.isDragging && !state.isResizing) {
-        if (nearLeft || nearRight || nearTop || nearBottom) {
-            startResize(parentComponent, nearLeft, nearRight, nearTop, nearBottom, inputs);
+        // Use getEdgeInfo helper function for consistency
+        const edges = getEdgeInfo(parentComponent, mouse);
+        
+        if (edges.isNearEdge) {
+            startResize(parentComponent, edges, inputs);
         } else {
             startMove(parentComponent, inputs);
         }
@@ -156,7 +151,7 @@ function handleMouseOff(inputs) {
         for (const key in inputs['selectedElementList']) {
             const selectedElement = inputs['selectedElementList'][key];
             if (selectedElement.classList.contains('base-user-component')) {
-                window.removeResizeHandles(selectedElement);
+                selectedElement.dispatchEvent(new CustomEvent('removeResizeHandles'));
             }
         }
     }
@@ -169,8 +164,8 @@ function deselectAll(inputs) {
     inputs['selectedElementList'] = {};
 }
 
-function startResize(element, nearLeft, nearRight, nearTop, nearBottom, inputs) {
-    // Double-check element is selected before allowing resize
+// Simplified startResize function
+function startResize(element, edges, inputs) {
     if (!inputs['selectedElementList'][element.id]) {
         console.log('Resize blocked: Element not selected');
         return;
@@ -179,20 +174,22 @@ function startResize(element, nearLeft, nearRight, nearTop, nearBottom, inputs) 
     state.resizingElement = element;
     state.isResizing = true;
     
-    if (element.classList.contains('ResizableXAxis') && (nearRight || nearLeft)) {
-        state.handle = nearRight ? 'e' : 'w';
-    } else if (element.classList.contains('ResizableYAxis') && (nearTop || nearBottom)) {
-        state.handle = nearBottom ? 's' : 'n';
-    } else if (element.classList.contains('ResizableXorYAxis')) {
-        if (nearLeft && nearTop) state.handle = 'nw';
-        else if (nearLeft && nearBottom) state.handle = 'sw';
-        else if (nearRight && nearTop) state.handle = 'ne';
-        else if (nearRight && nearBottom) state.handle = 'se';
-        else if (nearLeft) state.handle = 'w';
-        else if (nearRight) state.handle = 'e';
-        else if (nearTop) state.handle = 'n';
-        else if (nearBottom) state.handle = 's';
+    // Simplified handle determination
+    const {nearLeft, nearRight, nearTop, nearBottom} = edges;
+    
+    if (element.classList.contains('ResizableXorYAxis')) {
+        state.handle = (nearLeft && nearTop) ? 'nw' :
+                      (nearLeft && nearBottom) ? 'sw' :
+                      (nearRight && nearTop) ? 'ne' :
+                      (nearRight && nearBottom) ? 'se' :
+                      nearLeft ? 'w' : nearRight ? 'e' :
+                      nearTop ? 'n' : nearBottom ? 's' : null;
+    } else if (element.classList.contains('ResizableXAxis')) {
+        state.handle = nearRight ? 'e' : nearLeft ? 'w' : null;
+    } else if (element.classList.contains('ResizableYAxis')) {
+        state.handle = nearBottom ? 's' : nearTop ? 'n' : null;
     }
+    
     console.log('Resize started with handle:', state.handle);
 }
 
