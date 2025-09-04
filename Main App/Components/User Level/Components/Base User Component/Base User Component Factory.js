@@ -53,7 +53,8 @@ window.BaseUserComponentFactory = {
             'Base User Component Selection Behavior.js',
             'Base User Component Move Behavior.js',
             'Base User Component Nesting Behavior.js',
-            'Base User Component Resize Behavior.js'
+            'Base User Component Resize Behavior.js',
+            'Base User Component Right Click Menu.js'
         ];
         
         const basePath = '../Components/User Level/Components/Base User Component/';

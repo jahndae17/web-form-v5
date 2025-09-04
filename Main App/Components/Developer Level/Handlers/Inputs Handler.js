@@ -54,3 +54,21 @@ function handleMouseUp(e) {
         };
     }
 };
+
+function handleRightClick(e) {
+    const rightclick_element = e.target;
+    const rightclick_context = e.target.dataset.component;
+    const rightclick_x = e.clientX;
+    const rightclick_y = e.clientY;
+    const rightclick_time = Date.now();
+    // Update the context in the handler data
+    if (window.handlerData) {
+        window.handlerData['shared handler data'][0]['context']['on last right click'] = {
+            element: rightclick_element,
+            "component type": rightclick_context,
+            x: rightclick_x,
+            y: rightclick_y,
+            time: rightclick_time
+        };
+    }
+};

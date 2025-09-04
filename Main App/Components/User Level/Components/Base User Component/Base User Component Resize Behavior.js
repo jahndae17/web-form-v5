@@ -50,7 +50,24 @@
         // Remove existing handles first
         removeResizeHandles(component);
         
-        const handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
+        // Determine which handles to add based on component classes
+        let handles = [];
+        
+        if (component.classList.contains('ResizableX')) {
+            // Only horizontal resize handles
+            handles = ['e', 'w'];
+        } else if (component.classList.contains('ResizableY')) {
+            // Only vertical resize handles
+            handles = ['n', 's'];
+        } else if (component.classList.contains('ResizableXorYAxis')) {
+            // All resize handles (both axes and corners)
+            handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
+        } else {
+            // No resize class found, skip adding handles
+            console.log('No resize class found for:', component.id);
+            return;
+        }
+        
         handles.forEach(handle => {
             const div = document.createElement('div');
             div.className = `resize-handle ${handle}`;
@@ -71,7 +88,7 @@
             component.appendChild(div);
         });
         
-        console.log('Resize handles added to:', component.id);
+        console.log(`Resize handles (${handles.join(', ')}) added to:`, component.id);
     }
 
     function removeResizeHandles(component) {

@@ -106,6 +106,7 @@
                 document.addEventListener('mousedown', (e) => handleMousedown(e));
                 document.addEventListener('mousemove', (e) => handleMouseMove(e));
                 document.addEventListener('mouseup', (e) => handleMouseUp(e));
+                document.addEventListener('contextmenu', (e) => handleRightClick(e));
 
                 const mode = fetchedData['shared handler data'][0]['selectedMode'];
                 console.log('Handler data loaded, mode:', mode);

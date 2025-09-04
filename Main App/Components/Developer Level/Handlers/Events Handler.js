@@ -16,6 +16,7 @@ setInterval(() => {
     // Add mouse down detection
     const hasMouseDown = context['on last mouse down'].time > context['on last mouse up'].time;
     const mouseJustPressed = Date.now() - context['on last mouse down'].time < 200; // Recent mouse down
+    const rightClickJustHappened = context['on last right click'] ? Date.now() - context['on last right click'].time < 100 : false; // Recent right click
     
     // Calculate frame-to-frame delta for smooth live updates
     const frameDeltaX = context['now'].x - (state.lastMousePosition.x || context['now'].x);
@@ -45,14 +46,23 @@ setInterval(() => {
         x: context['now'].x,
         y: context['now'].y
     };
+    
+    // Right-click mouse - for context menu detection
+    const rightClickMouse = {
+        timeDiff: context['on last right click'] ? Date.now() - context['on last right click'].time : Infinity,
+        justHappened: rightClickJustHappened,
+        element: context['on last right click']?.element || null,
+        x: context['on last right click']?.x || 0,
+        y: context['on last right click']?.y || 0
+    };
 
-    handleOperations(liveMouse, completionMouse, inputs);
+    handleOperations(liveMouse, completionMouse, inputs, rightClickMouse);
     
     // Update last position for next frame
     state.lastMousePosition = { x: context['now'].x, y: context['now'].y };
 }, 10);
 
-function handleOperations(liveMouse, completionMouse, inputs) {
+function handleOperations(liveMouse, completionMouse, inputs, rightClickMouse) {
     // Live updates during drag - dispatch to behavior files
     if (state.isMoving && liveMouse.isDragging) {
         state.movingElement.dispatchEvent(new CustomEvent('liveMove', {detail: liveMouse}));
@@ -91,6 +101,13 @@ function handleOperations(liveMouse, completionMouse, inputs) {
     // Handle current element interactions - dispatch to behavior files
     if (liveMouse.element?.classList?.contains('base-user-component')) {
         liveMouse.element.dispatchEvent(new CustomEvent('handleComponentInteraction', {detail: {liveMouse, inputs, state}}));
+        
+        // Handle right-click events for context menu on components
+        if (rightClickMouse.justHappened && rightClickMouse.element === liveMouse.element) {
+            rightClickMouse.element.dispatchEvent(new CustomEvent('handleRightClick', {
+                detail: rightClickMouse
+            }));
+        }
     } else if (liveMouse.element?.classList?.contains('resize-handle')) {
         const parentComponent = liveMouse.element.closest('.base-user-component');
         if (parentComponent) {
@@ -98,8 +115,16 @@ function handleOperations(liveMouse, completionMouse, inputs) {
         }
     } else if (liveMouse.element?.id === 'mainCanvas') {
         document.dispatchEvent(new CustomEvent('handleCanvasInteraction', {detail: {inputs, timeDiff: completionMouse.timeDiff, state}}));
+        // Close right-click menu when clicking on canvas
+        if (window.BaseUserComponentRightClickMenu && liveMouse.mouseJustPressed) {
+            window.BaseUserComponentRightClickMenu.close();
+        }
     } else {
         document.dispatchEvent(new CustomEvent('handleMouseOff', {detail: {inputs, state}}));
+        // Close right-click menu when clicking elsewhere
+        if (window.BaseUserComponentRightClickMenu && liveMouse.mouseJustPressed) {
+            window.BaseUserComponentRightClickMenu.close();
+        }
     }
 }
 
