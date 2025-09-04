@@ -50,15 +50,37 @@
             potentialTarget.dataset.nestingTarget = 'true';
         }
         
-        // Update dragged element position with frame delta - fix NaN issue
-        const currentLeft = parseInt(element.style.left) || 0;
-        const currentTop = parseInt(element.style.top) || 0;
+        // Update dragged element position using direct mouse-to-component calculation
+        // Get the offset from mouse to component ONLY on first frame of drag
+        if (!element.dataset.dragOffset && liveMouse.isDragging) {
+            const rect = element.getBoundingClientRect();
+            element.dataset.dragOffset = JSON.stringify({
+                x: liveMouse.x - rect.left,
+                y: liveMouse.y - rect.top
+            });
+        }
         
-        const newLeft = currentLeft + (liveMouse.deltaX || 0);
-        const newTop = currentTop + (liveMouse.deltaY || 0);
-        
-        element.style.left = newLeft + 'px';
-        element.style.top = newTop + 'px';
+        // Calculate component position based on current mouse and original offset
+        if (element.dataset.dragOffset) {
+            const dragOffset = JSON.parse(element.dataset.dragOffset);
+            
+            // Calculate desired component position: nowMouseX - dragOffsetX
+            const desiredLeft = liveMouse.x - dragOffset.x;
+            const desiredTop = liveMouse.y - dragOffset.y;
+            
+            // Apply snapping to the component position
+            let finalLeft = desiredLeft;
+            let finalTop = desiredTop;
+            
+            if (typeof window.applySnapping === 'function') {
+                const snapped = window.applySnapping(desiredLeft, desiredTop,false);
+                finalLeft = snapped.x;
+                finalTop = snapped.y;
+            }
+            
+            element.style.left = finalLeft + 'px';
+            element.style.top = finalTop + 'px';
+        }
         element.style.transform = 'scale(1.05)';
         element.style.boxShadow = '0 8px 16px rgba(0, 150, 255, 0.4)';
         element.style.border = '2px dashed #0096ff';
@@ -132,6 +154,13 @@
         // Move component to new parent
         targetContainer.appendChild(nestableComponent);
         
+        // Apply snapping to final position
+        if (typeof window.applySnapping === 'function') {
+            const snapped = window.applySnapping(relativeX, relativeY, false); // Don't show guidelines for final position
+            relativeX = snapped.x;
+            relativeY = snapped.y;
+        }
+        
         // Update position to be relative to new parent
         nestableComponent.style.left = relativeX + 'px';
         nestableComponent.style.top = relativeY + 'px';
@@ -178,6 +207,9 @@
         element.style.transform = '';
         element.style.boxShadow = '';
         element.style.opacity = '';
+        
+        // Clear drag offset when nesting completes
+        delete element.dataset.dragOffset;
         
         // Only clear nesting-specific border (dashed), preserve selection border
         if (element.style.border.includes('dashed')) {

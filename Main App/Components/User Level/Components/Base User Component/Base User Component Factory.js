@@ -6,7 +6,7 @@ window.BaseUserComponentFactory = {
         
         // Create the component element
         const component = document.createElement('div');
-        component.className = 'base-user-component draggable ResizableXorYAxis isNestable acceptsChildren';
+        component.className = 'base-user-component draggable ResizableXorYAxis isNestable acceptsChildren snapping';
         component.setAttribute('data-component', 'base-user-component');
         component.id = componentId;
         
@@ -49,6 +49,7 @@ window.BaseUserComponentFactory = {
     // Load behavior scripts for a specific component instance
     loadComponentBehaviors: function(componentId) {
         const behaviors = [
+            'Base User Component Snapping Modifier.js',
             'Base User Component Selection Behavior.js',
             'Base User Component Move Behavior.js',
             'Base User Component Nesting Behavior.js',

@@ -113,38 +113,127 @@
     function applyLiveResize(element, handle, deltaX, deltaY, startPosition) {
         const resizeOperations = {
             'nw': () => {
-                element.style.width = `${startPosition.width - deltaX}px`;
-                element.style.height = `${startPosition.height - deltaY}px`;
-                element.style.left = `${startPosition.left + deltaX}px`;
-                element.style.top = `${startPosition.top + deltaY}px`;
+                let newWidth = startPosition.width - deltaX;
+                let newHeight = startPosition.height - deltaY;
+                let newLeft = startPosition.left + deltaX;
+                let newTop = startPosition.top + deltaY;
+                
+                // Apply snapping to dimensions and position
+                if (typeof window.applySnapping === 'function') {
+                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
+                    const snappedPos = window.applySnapping(newLeft, newTop);
+                    newWidth = snappedSize.x;
+                    newHeight = snappedSize.y;
+                    newLeft = snappedPos.x;
+                    newTop = snappedPos.y;
+                }
+                
+                element.style.width = `${newWidth}px`;
+                element.style.height = `${newHeight}px`;
+                element.style.left = `${newLeft}px`;
+                element.style.top = `${newTop}px`;
             },
             'ne': () => {
-                element.style.width = `${startPosition.width + deltaX}px`;
-                element.style.height = `${startPosition.height - deltaY}px`;
-                element.style.top = `${startPosition.top + deltaY}px`;
+                let newWidth = startPosition.width + deltaX;
+                let newHeight = startPosition.height - deltaY;
+                let newTop = startPosition.top + deltaY;
+                
+                // Apply snapping to dimensions and position
+                if (typeof window.applySnapping === 'function') {
+                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
+                    const snappedPos = window.applySnapping(startPosition.left, newTop);
+                    newWidth = snappedSize.x;
+                    newHeight = snappedSize.y;
+                    newTop = snappedPos.y;
+                }
+                
+                element.style.width = `${newWidth}px`;
+                element.style.height = `${newHeight}px`;
+                element.style.top = `${newTop}px`;
             },
             'sw': () => {
-                element.style.width = `${startPosition.width - deltaX}px`;
-                element.style.height = `${startPosition.height + deltaY}px`;
-                element.style.left = `${startPosition.left + deltaX}px`;
+                let newWidth = startPosition.width - deltaX;
+                let newHeight = startPosition.height + deltaY;
+                let newLeft = startPosition.left + deltaX;
+                
+                // Apply snapping to dimensions and position
+                if (typeof window.applySnapping === 'function') {
+                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
+                    const snappedPos = window.applySnapping(newLeft, startPosition.top);
+                    newWidth = snappedSize.x;
+                    newHeight = snappedSize.y;
+                    newLeft = snappedPos.x;
+                }
+                
+                element.style.width = `${newWidth}px`;
+                element.style.height = `${newHeight}px`;
+                element.style.left = `${newLeft}px`;
             },
             'se': () => {
-                element.style.width = `${startPosition.width + deltaX}px`;
-                element.style.height = `${startPosition.height + deltaY}px`;
+                let newWidth = startPosition.width + deltaX;
+                let newHeight = startPosition.height + deltaY;
+                
+                // Apply snapping to dimensions
+                if (typeof window.applySnapping === 'function') {
+                    const snapped = window.applySnapping(newWidth, newHeight, false);
+                    newWidth = snapped.x;
+                    newHeight = snapped.y;
+                }
+                
+                element.style.width = `${newWidth}px`;
+                element.style.height = `${newHeight}px`;
             },
             'n': () => {
-                element.style.height = `${startPosition.height - deltaY}px`;
-                element.style.top = `${startPosition.top + deltaY}px`;
+                let newHeight = startPosition.height - deltaY;
+                let newTop = startPosition.top + deltaY;
+                
+                // Apply snapping to dimension and position
+                if (typeof window.applySnapping === 'function') {
+                    const snappedSize = window.applySnapping(startPosition.width, newHeight, false);
+                    const snappedPos = window.applySnapping(startPosition.left, newTop);
+                    newHeight = snappedSize.y;
+                    newTop = snappedPos.y;
+                }
+                
+                element.style.height = `${newHeight}px`;
+                element.style.top = `${newTop}px`;
             },
             's': () => {
-                element.style.height = `${startPosition.height + deltaY}px`;
+                let newHeight = startPosition.height + deltaY;
+                
+                // Apply snapping to dimension
+                if (typeof window.applySnapping === 'function') {
+                    const snapped = window.applySnapping(startPosition.width, newHeight, false);
+                    newHeight = snapped.y;
+                }
+                
+                element.style.height = `${newHeight}px`;
             },
             'e': () => {
-                element.style.width = `${startPosition.width + deltaX}px`;
+                let newWidth = startPosition.width + deltaX;
+                
+                // Apply snapping to dimension
+                if (typeof window.applySnapping === 'function') {
+                    const snapped = window.applySnapping(newWidth, startPosition.height, false);
+                    newWidth = snapped.x;
+                }
+                
+                element.style.width = `${newWidth}px`;
             },
             'w': () => {
-                element.style.width = `${startPosition.width - deltaX}px`;
-                element.style.left = `${startPosition.left + deltaX}px`;
+                let newWidth = startPosition.width - deltaX;
+                let newLeft = startPosition.left + deltaX;
+                
+                // Apply snapping to dimension and position
+                if (typeof window.applySnapping === 'function') {
+                    const snappedSize = window.applySnapping(newWidth, startPosition.height, false);
+                    const snappedPos = window.applySnapping(newLeft, startPosition.top);
+                    newWidth = snappedSize.x;
+                    newLeft = snappedPos.x;
+                }
+                
+                element.style.width = `${newWidth}px`;
+                element.style.left = `${newLeft}px`;
             }
         };
         
