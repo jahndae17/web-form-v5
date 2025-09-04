@@ -3,6 +3,7 @@ let state = {
     isResizing: false, isMoving: false, isNesting: false, handle: '', 
     resizingElement: null, movingElement: null, nestingElement: null,
     moveStartPosition: null, resizeStartPosition: null,
+    lastMousePosition: { x: 0, y: 0 },
     lastResizeTime: 0, lastMoveTime: 0, lastNestTime: 0
 };
 
@@ -12,11 +13,17 @@ setInterval(() => {
     
     const {context, inputs} = window.handlerData['shared handler data'][0];
     
+    // Calculate frame-to-frame delta for smooth live updates
+    const frameDeltaX = context['now'].x - (state.lastMousePosition.x || context['now'].x);
+    const frameDeltaY = context['now'].y - (state.lastMousePosition.y || context['now'].y);
+    
     // Live mouse - for real-time visual updates during drag
     const liveMouse = {
-        deltaX: context['now'].x - context['on last mouse down'].x,
-        deltaY: context['now'].y - context['on last mouse down'].y,
-        timeDiff: Date.now() - context['on last mouse up'].time,  // ✅ Add this line
+        deltaX: frameDeltaX,  // Frame-to-frame movement
+        deltaY: frameDeltaY,  // Frame-to-frame movement
+        totalDeltaX: context['now'].x - context['on last mouse down'].x,  // Total movement since mouse down
+        totalDeltaY: context['now'].y - context['on last mouse down'].y,  // Total movement since mouse down
+        timeDiff: Date.now() - context['on last mouse up'].time,
         isDragging: context['on last mouse down'].time > context['on last mouse up'].time,
         element: context['now'].element,
         x: context['now'].x,
@@ -35,6 +42,9 @@ setInterval(() => {
     };
 
     handleOperations(liveMouse, completionMouse, inputs);
+    
+    // Update last position for next frame
+    state.lastMousePosition = { x: context['now'].x, y: context['now'].y };
 }, 10);
 
 function handleOperations(liveMouse, completionMouse, inputs) {
@@ -47,14 +57,21 @@ function handleOperations(liveMouse, completionMouse, inputs) {
         updateLiveResize(state.resizingElement, state.handle, liveMouse);
     }
     
+    if (state.isNesting && liveMouse.isDragging) {
+        updateLiveNesting(state.nestingElement, liveMouse, inputs);
+    }
+    
     // Consolidated completion check
     const completionChecks = [
         // Resizing operation // Highest Priority
         {condition: state.isResizing, action: () => state.resizingElement.dispatchEvent(new CustomEvent('resizeElement', {detail: {handle: state.handle, deltaX: completionMouse.deltaX, deltaY: completionMouse.deltaY}})), reset: 'resize'},
-        // Nesting operation
+        // Nesting operation - use live positioning for completion
         {condition: state.isNesting, action: () => handleNestingCompletion(state.nestingElement, completionMouse, inputs), reset: 'nesting'},
-        // Move operation // Lowest Priority
-        {condition: state.isMoving && !state.isResizing && !state.isNesting, action: () => state.movingElement.dispatchEvent(new CustomEvent('dragMove', {detail: completionMouse})), reset: 'move'}
+        // Move operation // Lowest Priority - don't dispatch event since we've been updating live
+        {condition: state.isMoving && !state.isResizing && !state.isNesting, action: () => {
+            // Movement has already been applied live, just dispatch completion event
+            state.movingElement.dispatchEvent(new CustomEvent('dragMoveComplete', {detail: completionMouse}));
+        }, reset: 'move'}
     ];
 
     // Execute first matching completion
@@ -96,10 +113,20 @@ function resetState(type) {
         }
     };
     
-    // Restore visual state for move operations
+    // Restore visual state for operations
     if (type === 'move' && state.movingElement) {
         state.movingElement.style.transform = '';
         state.movingElement.style.boxShadow = '';
+    }
+    
+    if (type === 'nesting' && state.nestingElement) {
+        // Restore nesting element visual state
+        state.nestingElement.style.transform = '';
+        state.nestingElement.style.boxShadow = '';
+        state.nestingElement.style.border = '';
+        state.nestingElement.style.opacity = '';
+        // Clear any nesting target highlights
+        clearNestingHighlights();
     }
     
     Object.assign(state, stateResets[type]);
@@ -108,20 +135,78 @@ function resetState(type) {
 
 // Live update functions for real-time visual feedback
 function updateLiveMove(element, liveMouse) {
-    if (!state.moveStartPosition) {
-        state.moveStartPosition = {
-            left: parseInt(element.style.left || 0),
-            top: parseInt(element.style.top || 0)
-        };
-    }
+    // Use frame delta for smooth incremental movement
+    const currentLeft = parseInt(element.style.left || 0);
+    const currentTop = parseInt(element.style.top || 0);
     
-    const newLeft = state.moveStartPosition.left + liveMouse.deltaX;
-    const newTop = state.moveStartPosition.top + liveMouse.deltaY;
+    const newLeft = currentLeft + liveMouse.deltaX;
+    const newTop = currentTop + liveMouse.deltaY;
     
     element.style.left = newLeft + 'px';
     element.style.top = newTop + 'px';
     element.style.transform = 'scale(1.02)';
     element.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.3)';
+    
+    // Debug logging (optional)
+    if (Math.abs(liveMouse.deltaX) > 0 || Math.abs(liveMouse.deltaY) > 0) {
+        console.log(`Live move: ${element.id} by (${liveMouse.deltaX}, ${liveMouse.deltaY}) to (${newLeft}, ${newTop})`);
+    }
+}
+
+function updateLiveNesting(element, liveMouse, inputs) {
+    // Use frame delta for smooth incremental movement (same as move)
+    const currentLeft = parseInt(element.style.left || 0);
+    const currentTop = parseInt(element.style.top || 0);
+    
+    const newLeft = currentLeft + liveMouse.deltaX;
+    const newTop = currentTop + liveMouse.deltaY;
+    
+    element.style.left = newLeft + 'px';
+    element.style.top = newTop + 'px';
+    
+    // Enhanced visual feedback for nesting operation
+    element.style.transform = 'scale(1.05)';
+    element.style.boxShadow = '0 12px 24px rgba(0, 150, 255, 0.4)';
+    element.style.border = '2px dashed #0096ff';
+    element.style.opacity = '0.8';
+    
+    // Live nesting target detection
+    const elementRect = element.getBoundingClientRect();
+    const centerX = elementRect.left + elementRect.width / 2;
+    const centerY = elementRect.top + elementRect.height / 2;
+    
+    // Temporarily hide element to detect target underneath
+    element.style.visibility = 'hidden';
+    const targetElement = document.elementFromPoint(centerX, centerY);
+    element.style.visibility = 'visible';
+    
+    // Highlight valid nesting targets
+    clearNestingHighlights();
+    if (targetElement && 
+        targetElement.classList.contains('acceptsChildren') && 
+        targetElement !== element.parentElement &&
+        targetElement !== element) {
+        
+        targetElement.style.outline = '3px solid #0096ff';
+        targetElement.style.backgroundColor = 'rgba(0, 150, 255, 0.1)';
+        targetElement.setAttribute('data-nesting-target', 'true');
+        
+        console.log('Valid nesting target highlighted:', targetElement.id || targetElement.className);
+    }
+    
+    // Debug logging (optional)
+    if (Math.abs(liveMouse.deltaX) > 0 || Math.abs(liveMouse.deltaY) > 0) {
+        console.log(`Live nesting: ${element.id} by (${liveMouse.deltaX}, ${liveMouse.deltaY}) to (${newLeft}, ${newTop})`);
+    }
+}
+
+function clearNestingHighlights() {
+    // Remove all existing nesting target highlights
+    document.querySelectorAll('[data-nesting-target="true"]').forEach(target => {
+        target.style.outline = '';
+        target.style.backgroundColor = '';
+        target.removeAttribute('data-nesting-target');
+    });
 }
 
 function updateLiveResize(element, handle, liveMouse) {
@@ -336,16 +421,14 @@ function startNesting(element, inputs) {
 }
 
 function handleNestingCompletion(nestingElement, mouse, inputs) {
-    // Calculate final position
+    // Use current live position instead of calculating from deltas
     const currentLeft = parseInt(nestingElement.style.left || 0);
     const currentTop = parseInt(nestingElement.style.top || 0);
-    const finalX = currentLeft + mouse.deltaX;
-    const finalY = currentTop + mouse.deltaY;
     
-    // Find element at the center of the component's final position
+    // Find element at the center of the component's current position
     const componentRect = nestingElement.getBoundingClientRect();
-    const centerX = componentRect.left + componentRect.width / 2 + mouse.deltaX;
-    const centerY = componentRect.top + componentRect.height / 2 + mouse.deltaY;
+    const centerX = componentRect.left + componentRect.width / 2;
+    const centerY = componentRect.top + componentRect.height / 2;
     
     // Temporarily hide component to get element underneath
     nestingElement.style.visibility = 'hidden';
@@ -359,11 +442,17 @@ function handleNestingCompletion(nestingElement, mouse, inputs) {
         targetElement !== nestingElement) {
         
         console.log('Nesting component into target:', targetElement);
-        performNesting(nestingElement, targetElement, finalX, finalY);
+        performNesting(nestingElement, targetElement, currentLeft, currentTop);
     } else {
-        // No valid nesting target, fallback to regular move
-        console.log('No valid nesting target, performing regular move');
-        nestingElement.dispatchEvent(new CustomEvent('dragMove', {detail: mouse}));
+        // No valid nesting target, dispatch completion event
+        console.log('No valid nesting target, nesting operation completed at current position');
+        nestingElement.dispatchEvent(new CustomEvent('nestingMoveComplete', {
+            detail: { 
+                finalX: currentLeft, 
+                finalY: currentTop,
+                completionMouse: mouse
+            }
+        }));
     }
 }
 
