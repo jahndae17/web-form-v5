@@ -26,7 +26,7 @@
         });
 
         // Completion handling for gallery children
-        child.addEventListener('cleanupMoveVisuals', () => {
+        child.addEventListener('cleanup', () => {
             cleanupGalleryMoveVisuals(child);
         });
     });

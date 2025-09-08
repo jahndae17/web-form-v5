@@ -92,9 +92,10 @@
     <button id="togglePanel">&#9776;</button>
     <button id="togglePreview">Edit</button>
 
-    <script src="../Components/Developer Level/Handlers/Events Handler.js"></script>
-    <script src="../Components/Developer Level/Handlers/Inputs Handler.js"></script>
-    <script src="../Components/User Level/Components/Base User Component/Base User Component Factory.js"></script>
+    <script src="../Components/Developer%20Level/Handlers/Events%20Handler.js"></script>
+    <script src="../Components/Developer%20Level/Handlers/Inputs%20Handler.js"></script>
+    <script src="../Components/User%20Level/Components/Base%20User%20Component/Base%20User%20Component%20Factory.js"></script>
+    <script src="../Components/User%20Level/Components/Gallery%20Component/Gallery%20Component%20Factory.js"></script>
     <script>
         const togglePreview = document.getElementById('togglePreview');
 
@@ -103,10 +104,13 @@
             .then(response => response.json())
             .then(fetchedData => {
                 window.handlerData = fetchedData;
-                document.addEventListener('mousedown', (e) => handleMousedown(e));
-                document.addEventListener('mousemove', (e) => handleMouseMove(e));
-                document.addEventListener('mouseup', (e) => handleMouseUp(e));
-                document.addEventListener('contextmenu', (e) => handleRightClick(e));
+                
+                // Ensure all handler functions are available before setting up listeners
+                setTimeout(() => {
+                    document.addEventListener('mousedown', (e) => handleMousedown(e));
+                    document.addEventListener('mousemove', (e) => handleMouseMove(e));
+                    document.addEventListener('mouseup', (e) => handleMouseUp(e));
+                }, 100);
 
                 const mode = fetchedData['shared handler data'][0]['selectedMode'];
                 console.log('Handler data loaded, mode:', mode);

@@ -39,6 +39,8 @@
     function showContextMenu(x, y) {
         closeContextMenu(); // Close any existing menu
         
+        console.log('Showing context menu at:', x, y);
+
         contextMenu = document.createElement('div');
         contextMenu.className = 'component-context-menu';
         contextMenu.innerHTML = `
@@ -53,7 +55,7 @@
         contextMenu.style.top = y + 'px';
         
         // Add event listeners to menu items
-        contextMenu.addEventListener('click', handleMenuClick);
+        contextMenu.addEventListener('click', (e) => handleMenuClick(e));
         
         // Add to document
         document.body.appendChild(contextMenu);
@@ -67,59 +69,75 @@
     
     // Handle menu item clicks
     function handleMenuClick(e) {
+        console.log('Menu click detected:', e.target);
         e.stopPropagation();
         
         const menuItem = e.target.closest('.context-menu-item');
-        if (!menuItem || !targetComponent) return;
+        console.log('Menu item found:', menuItem);
         
+        // Use the globally stored right-click target
+        const actualTarget = window.rightClickTarget;
+        
+        if (!menuItem || !actualTarget) {
+            console.log('No menu item or target component:', { menuItem, targetComponent: actualTarget });
+            return;
+        }
+
         const action = menuItem.getAttribute('data-action');
+        console.log('Action:', action, 'Target:', actualTarget);
         
         switch (action) {
             case 'convert-to-gallery':
-                convertToGallery();
+                console.log('Converting to gallery...');
+                convertToGallery(actualTarget);
                 break;
+            // ... other actions
         }
         
         closeContextMenu();
-    }
-    
-    // Convert base component to gallery component
-    function convertToGallery() {
+        // Clear the stored target after use
+        window.rightClickTarget = null;
+    }    // Convert base component to gallery component
+
+    function convertToGallery(targetComponent) {
+        console.log('convertToGallery called');
+        console.log('targetComponent:', targetComponent);
+        console.log('GalleryComponentFactory available:', !!window.GalleryComponentFactory);
+        
         if (!targetComponent || !window.GalleryComponentFactory) {
             console.error('Cannot convert to gallery: missing component or factory');
             return;
         }
         
         // Get current component properties
-        const currentRect = targetComponent.getBoundingClientRect();
         const container = targetComponent.parentElement;
         const currentLeft = targetComponent.style.left;
         const currentTop = targetComponent.style.top;
         const currentWidth = targetComponent.style.width;
-        
-        // Remove the old component
         const componentId = targetComponent.id;
-        targetComponent.remove();
         
-        // Create new gallery component at same position
-        const gallery = window.GalleryComponentFactory.createInstance({
-            left: currentLeft,
-            top: currentTop,
-            width: currentWidth,
-            container: container
-        });
+        // Update the existing component to be a gallery (like factory would create)
+        targetComponent.className = 'base-user-component gallery-component draggable ResizableX isNestable acceptsChildren snapping';
+        targetComponent.setAttribute('data-component', 'gallery-component');
+        targetComponent.id = `gallery-component_${Date.now()}`;
+        
+        // Ensure it has the gallery styling and setup
+        if (window.GalleryComponentFactory) {
+            window.GalleryComponentFactory.loadGalleryBehaviors(targetComponent.id);
+            window.GalleryComponentFactory.setupChildManagement(targetComponent);
+        }
         
         // Fire custom event to notify of conversion
         const convertEvent = new CustomEvent('componentConverted', {
             detail: {
                 originalId: componentId,
-                newId: gallery.id,
+                newId: targetComponent.id,
                 type: 'gallery'
             }
         });
         document.dispatchEvent(convertEvent);
         
-        console.log(`Converted ${componentId} to gallery component ${gallery.id}`);
+        console.log(`Converted ${componentId} to gallery component ${targetComponent.id}`);
     }
     
     // Close context menu
@@ -197,11 +215,21 @@
     // Auto-initialize when script loads
     initializeRightClickMenu();
     
-    // Re-initialize when new components are added
-    document.addEventListener('DOMNodeInserted', function(e) {
-        if (e.target.classList && e.target.classList.contains('base-user-component')) {
-            setTimeout(initializeRightClickMenu, 100);
-        }
+    // Re-initialize when new components are added using MutationObserver
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.classList && node.classList.contains('base-user-component')) {
+                    setTimeout(initializeRightClickMenu, 100);
+                }
+            });
+        });
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
     });
     
     // Also listen for component creation events
@@ -216,4 +244,10 @@
         initialize: initializeRightClickMenu,
         close: closeContextMenu
     };
+
+    window.BaseUserComponentRightClickMenu = {
+        handleMenuClick: handleMenuClick,
+        close: closeContextMenu
+    };
 })();
+

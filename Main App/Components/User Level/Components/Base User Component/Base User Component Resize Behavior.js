@@ -14,6 +14,12 @@
 
         console.log('Resize behavior attached to:', component.id);
 
+        // ✅ NEW: Updated event listener to match simplified Events Handler
+        component.addEventListener('handleResize', (e) => {
+            const {mouse, handle} = e.detail;
+            handleResizeStart(component, mouse, handle);
+        });
+
         // Reactive event listeners - respond to Events Handler
         component.addEventListener('addResizeHandles', () => {
             addResizeHandles(component);
@@ -23,28 +29,32 @@
             removeResizeHandles(component);
         });
 
-        component.addEventListener('resizeElement', (e) => {
-            // Clean up the start position after resize completion
-            delete component.dataset.resizeStartPosition;
-            
-            console.log('Resize operation completed for:', component.id);
-            // Note: Resize already applied via live updates, no need to apply again
-            // const {handle, deltaX, deltaY} = e.detail;
-            // resizeElement(component, handle, deltaX, deltaY);
-        });
-
-        // Live resize events - FIX: Extract both handle and liveMouse
+        // ✅ UPDATED: Live resize events - Fixed structure
         component.addEventListener('liveResize', (e) => {
-            const {handle, liveMouse} = e.detail;
-            updateLiveResize(component, handle, liveMouse);
+            const {mouse, handle} = e.detail; // ✅ Fixed: was {handle, liveMouse}
+            updateLiveResize(component, handle, mouse);
         });
 
-        component.addEventListener('dragResizeComplete', (e) => {
-            const completionMouse = e.detail;
-            console.log('Resize completed for:', component.id);
-            // Resize already applied live
+        // ✅ UPDATED: Complete resize events
+        component.addEventListener('completeResize', (e) => {
+            const mouse = e.detail; // ✅ Fixed: mouse object directly
+            completeResize(component, mouse);
+        });
+
+        // Clean up old event listeners that are no longer used
+        component.addEventListener('cleanup', () => {
+            removeResizeHandles(component);
+            delete component.dataset.resizeStartPosition;
         });
     });
+
+    // ✅ NEW: Handle resize start from Events Handler routing
+    function handleResizeStart(component, mouse, handle) {
+        // Start resize operation via Events Handler API
+        if (window.EventsHandler) {
+            window.EventsHandler.start('resize', component, handle);
+        }
+    }
     
     function addResizeHandles(component) {
         // Remove existing handles first
@@ -109,7 +119,8 @@
         return cursors[handle];
     }
 
-    function updateLiveResize(element, handle, liveMouse) {
+    // ✅ UPDATED: Fixed parameter name and structure
+    function updateLiveResize(element, handle, mouse) {
         // Use element dataset to track start position (survives across calls)
         if (!element.dataset.resizeStartPosition) {
             const rect = element.getBoundingClientRect();
@@ -123,8 +134,16 @@
         
         const startPosition = JSON.parse(element.dataset.resizeStartPosition);
         
-        // Use total deltas for cumulative resize effect
-        applyLiveResize(element, handle, liveMouse.totalDeltaX, liveMouse.totalDeltaY, startPosition);
+        // ✅ UPDATED: Use totalDeltaX/Y from mouse object
+        applyLiveResize(element, handle, mouse.totalDeltaX, mouse.totalDeltaY, startPosition);
+    }
+
+    // ✅ NEW: Complete resize function
+    function completeResize(component, mouse) {
+        // Clean up the start position after resize completion
+        delete component.dataset.resizeStartPosition;
+        console.log('Resize operation completed for:', component.id);
+        // Note: Resize already applied via live updates, no need to apply again
     }
 
     function applyLiveResize(element, handle, deltaX, deltaY, startPosition) {
@@ -138,7 +157,7 @@
                 // Apply snapping to dimensions and position
                 if (typeof window.applySnapping === 'function') {
                     const snappedSize = window.applySnapping(newWidth, newHeight, false);
-                    const snappedPos = window.applySnapping(newLeft, newTop);
+                    const snappedPos = window.applySnapping(newLeft, newTop, false);
                     newWidth = snappedSize.x;
                     newHeight = snappedSize.y;
                     newLeft = snappedPos.x;
@@ -158,7 +177,7 @@
                 // Apply snapping to dimensions and position
                 if (typeof window.applySnapping === 'function') {
                     const snappedSize = window.applySnapping(newWidth, newHeight, false);
-                    const snappedPos = window.applySnapping(startPosition.left, newTop);
+                    const snappedPos = window.applySnapping(startPosition.left, newTop, false);
                     newWidth = snappedSize.x;
                     newHeight = snappedSize.y;
                     newTop = snappedPos.y;
@@ -176,7 +195,7 @@
                 // Apply snapping to dimensions and position
                 if (typeof window.applySnapping === 'function') {
                     const snappedSize = window.applySnapping(newWidth, newHeight, false);
-                    const snappedPos = window.applySnapping(newLeft, startPosition.top);
+                    const snappedPos = window.applySnapping(newLeft, startPosition.top, false);
                     newWidth = snappedSize.x;
                     newHeight = snappedSize.y;
                     newLeft = snappedPos.x;
@@ -207,7 +226,7 @@
                 // Apply snapping to dimension and position
                 if (typeof window.applySnapping === 'function') {
                     const snappedSize = window.applySnapping(startPosition.width, newHeight, false);
-                    const snappedPos = window.applySnapping(startPosition.left, newTop);
+                    const snappedPos = window.applySnapping(startPosition.left, newTop, false);
                     newHeight = snappedSize.y;
                     newTop = snappedPos.y;
                 }
@@ -244,7 +263,7 @@
                 // Apply snapping to dimension and position
                 if (typeof window.applySnapping === 'function') {
                     const snappedSize = window.applySnapping(newWidth, startPosition.height, false);
-                    const snappedPos = window.applySnapping(newLeft, startPosition.top);
+                    const snappedPos = window.applySnapping(newLeft, startPosition.top, false);
                     newWidth = snappedSize.x;
                     newLeft = snappedPos.x;
                 }

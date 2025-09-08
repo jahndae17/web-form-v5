@@ -14,35 +14,36 @@
 
         console.log('Nesting behavior attached to:', component.id);
 
-        // Live nesting updates during drag
+        // ✅ UPDATED: Live nesting updates during drag - Fixed event structure
         component.addEventListener('liveNesting', (e) => {
-            const {liveMouse, inputs} = e.detail;
-            updateLiveNesting(component, liveMouse);
+            const mouse = e.detail; // ✅ Mouse object directly (not {liveMouse, inputs})
+            updateLiveNesting(component, mouse);
         });
 
-        // Nesting completion
+        // ✅ UPDATED: Nesting completion - Fixed event structure
         component.addEventListener('completeNesting', (e) => {
-            const {completionMouse, inputs} = e.detail;
-            handleNestingCompletion(component, completionMouse, inputs);
+            const mouse = e.detail; // ✅ Mouse object directly (not {completionMouse, inputs})
+            handleNestingCompletion(component, mouse);
         });
 
-        // Visual cleanup
-        component.addEventListener('cleanupNestingVisuals', () => {
+        // ✅ UPDATED: Visual cleanup - Now called via 'cleanup' event
+        component.addEventListener('cleanup', () => {
             cleanupNestingVisuals(component);
         });
     });
 
-    // Global event listener for clearing highlights
+    // Global event listener for clearing highlights (this can stay the same)
     document.addEventListener('clearNestingHighlights', () => {
         clearNestingHighlights();
     });
 
-    function updateLiveNesting(element, liveMouse) {
+    // ✅ UPDATED: Parameter name changed from liveMouse to mouse
+    function updateLiveNesting(element, mouse) {
         // Clear previous highlights
         clearNestingHighlights();
         
         // Find potential drop target using correct mouse coordinates
-        const potentialTarget = findPotentialDropTarget(liveMouse.x, liveMouse.y, element);
+        const potentialTarget = findPotentialDropTarget(mouse.x, mouse.y, element);
         
         if (potentialTarget) {
             potentialTarget.style.outline = '3px solid #0096ff';
@@ -52,11 +53,11 @@
         
         // Update dragged element position using direct mouse-to-component calculation
         // Get the offset from mouse to component ONLY on first frame of drag
-        if (!element.dataset.dragOffset && liveMouse.isDragging) {
+        if (!element.dataset.dragOffset && mouse.isDragging) {
             const rect = element.getBoundingClientRect();
             element.dataset.dragOffset = JSON.stringify({
-                x: liveMouse.x - rect.left,
-                y: liveMouse.y - rect.top
+                x: mouse.x - rect.left,
+                y: mouse.y - rect.top
             });
         }
         
@@ -65,15 +66,15 @@
             const dragOffset = JSON.parse(element.dataset.dragOffset);
             
             // Calculate desired component position: nowMouseX - dragOffsetX
-            const desiredLeft = liveMouse.x - dragOffset.x;
-            const desiredTop = liveMouse.y - dragOffset.y;
+            const desiredLeft = mouse.x - dragOffset.x;
+            const desiredTop = mouse.y - dragOffset.y;
             
             // Apply snapping to the component position
             let finalLeft = desiredLeft;
             let finalTop = desiredTop;
             
             if (typeof window.applySnapping === 'function') {
-                const snapped = window.applySnapping(desiredLeft, desiredTop,false);
+                const snapped = window.applySnapping(desiredLeft, desiredTop, false);
                 finalLeft = snapped.x;
                 finalTop = snapped.y;
             }
@@ -87,7 +88,11 @@
         element.style.opacity = '0.8';
     }
 
-    function handleNestingCompletion(element, completionMouse, inputs) {
+    // ✅ UPDATED: Parameter names and structure
+    function handleNestingCompletion(element, mouse) {
+        // Get inputs from handler data since it's not passed in event anymore
+        const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+        
         // Use current element position instead of calculating from deltas
         const rect = element.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;

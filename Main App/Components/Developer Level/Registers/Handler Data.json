@@ -7,6 +7,7 @@
                 "now":{
                     "element": "",
                     "component type": "",
+                    "button": 0,
                     "x": 0,
                     "y": 0,
                     "time": ""
@@ -14,6 +15,7 @@
                 "on last mouse down": {
                     "element": "",
                     "component type": "",
+                    "button": 0,
                     "x": 0,
                     "y": 0,
                     "time": ""
@@ -21,13 +23,7 @@
                 "on last mouse up": {
                     "element": "",
                     "component type": "",
-                    "x": 0,
-                    "y": 0,
-                    "time": ""
-                },
-                "on last right click": {
-                    "element": "",
-                    "component type": "",
+                    "button": 0,
                     "x": 0,
                     "y": 0,
                     "time": ""

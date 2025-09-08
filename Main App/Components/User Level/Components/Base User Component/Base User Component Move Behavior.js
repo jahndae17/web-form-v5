@@ -21,8 +21,8 @@
         });
 
         // Visual cleanup
-        component.addEventListener('cleanupMoveVisuals', () => {
-            cleanupMoveVisuals(component);
+        component.addEventListener('cleanup', () => {
+            cleanup(component);
         });
     });
 
@@ -50,7 +50,7 @@
             let finalTop = desiredTop;
             
             if (typeof window.applySnapping === 'function') {
-                const snapped = window.applySnapping(desiredLeft, desiredTop);
+                const snapped = window.applySnapping(desiredLeft, desiredTop, false);
                 finalLeft = snapped.x;
                 finalTop = snapped.y;
             }
@@ -63,7 +63,7 @@
         element.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.3)';
     }
 
-    function cleanupMoveVisuals(element) {
+    function cleanup(element) {
         element.style.transform = '';
         element.style.boxShadow = '';
         

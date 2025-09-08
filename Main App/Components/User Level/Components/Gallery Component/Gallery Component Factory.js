@@ -89,15 +89,20 @@ window.GalleryComponentFactory = {
             'Base User Component Snapping Modifier.js',
             'Base User Component Selection Behavior.js',
             'Base User Component Move Behavior.js',
-            'Base User Component Nesting Behavior.js',
+            'Gallery Component Nesting Behavior.js',
             'Base User Component Resize Behavior.js'
         ];
         
-        const basePath = '../Base User Component/';
+        const basePath = '../Components/User Level/Components/Base User Component/';
         
         behaviors.forEach(behavior => {
             const cacheBuster = `?v=${Date.now()}`;
-            fetch(`${basePath}${behavior}${cacheBuster}`)
+            // Use different path for Gallery Component behaviors
+            const behaviorPath = behavior.startsWith('Gallery Component') 
+                ? `../Components/User Level/Components/Gallery Component/${behavior}${cacheBuster}`
+                : `${basePath}${behavior}${cacheBuster}`;
+            
+            fetch(behaviorPath)
                 .then(response => response.text())
                 .then(script => {
                     let modifiedScript = script.replace(
@@ -124,16 +129,21 @@ window.GalleryComponentFactory = {
         const behaviors = [
             'Base User Component Snapping Modifier.js',
             'Base User Component Selection Behavior.js',
-            'Base User Component Move Behavior.js',
+            'Gallery Component Move Behavior.js',
             'Base User Component Nesting Behavior.js',
             'Base User Component Resize Behavior.js'
         ];
         
-        const basePath = '../Base User Component/';
+        const basePath = '../Components/User Level/Components/Base User Component/';
         
         behaviors.forEach(behavior => {
             const cacheBuster = `?v=${Date.now()}`;
-            fetch(`${basePath}${behavior}${cacheBuster}`)
+            // Use different path for Gallery Component Move Behavior
+            const behaviorPath = behavior === 'Gallery Component Move Behavior.js' 
+                ? `../Components/User Level/Components/Gallery Component/${behavior}${cacheBuster}`
+                : `${basePath}${behavior}${cacheBuster}`;
+            
+            fetch(behaviorPath)
                 .then(response => response.text())
                 .then(script => {
                     let modifiedScript = script.replace(
@@ -162,7 +172,7 @@ window.GalleryComponentFactory = {
         });
         
         // Listen for gallery resize to update child widths
-        gallery.addEventListener('resizeElement', (e) => {
+        gallery.addEventListener('completeResize', (e) => {
             this.updateChildWidths(gallery);
         });
     },

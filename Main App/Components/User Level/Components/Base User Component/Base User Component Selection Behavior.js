@@ -14,23 +14,33 @@
 
         console.log('Selection behavior attached to:', component.id);
 
-        // Component interaction handling
-        component.addEventListener('handleComponentInteraction', (e) => {
-            const {liveMouse, inputs, state} = e.detail;
-            handleComponentSelection(component, liveMouse, inputs, state);
+        // NEW: Updated event listener to match simplified Events Handler
+        component.addEventListener('handleComponent', (e) => {
+            const mouse = e.detail; // Simplified - mouse object directly
+            handleComponentSelection(component, mouse);
         });
-
-
     });
 
-    function handleComponentSelection(element, liveMouse, inputs, state) {
+    function handleComponentSelection(element, mouse) {
+        // Get inputs from handler data directly since it's not passed in detail anymore
+        const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+        if (!inputs) return;
+
+        // Get current state from Events Handler
+        const state = window.EventsHandler?.getState?.() || {};
+
         // Only allow selection on actual mouse down, not hover
-        if (!inputs['selectedElementList'][element.id] && 
-            liveMouse.mouseJustPressed &&  // ✅ Must be recent mouse down
-            Math.abs(liveMouse.totalDeltaX) + Math.abs(liveMouse.totalDeltaY) < 16 && 
-            liveMouse.timeDiff < 99) {
+        if (!inputs['selectedElementList']?.[element.id] && 
+            !mouse.isDragging &&  // ✅ Must not be dragging (simplified from mouseJustPressed)
+            Math.abs(mouse.totalDeltaX) + Math.abs(mouse.totalDeltaY) < 16) {
             
             clearAllSelections();
+            
+            // Initialize selectedElementList if it doesn't exist
+            if (!inputs['selectedElementList']) {
+                inputs['selectedElementList'] = {};
+            }
+            
             inputs['selectedElementList'][element.id] = element;
             
             // Apply selection visual
@@ -38,46 +48,41 @@
             element.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
             element.classList.add('selected');
             
-            // Update Events Handler state via API
-            if (window.EventsHandler) {
-                window.EventsHandler.updateSelectedComponent(element);
-            }
-            
             console.log('Component selected:', element.id);
             return;
         }
 
         // Only allow operations on selected elements during drag
-        if (!inputs['selectedElementList'][element.id]) return;
+        if (!inputs['selectedElementList']?.[element.id]) return;
 
         // Handle drag operations for selected components
-        if (liveMouse.isDragging && !state.isResizing && !state.isNesting) {
+        if (mouse.isDragging && !state.operation && !state.isNesting) {
             // Edge detection helper for resize handles
-            const edges = getEdgeInfo(element, liveMouse);
-            
+            const edges = getEdgeInfo(element, mouse);
+
             // Handle resize handles
             element.dispatchEvent(new CustomEvent(edges.isNearEdge ? 'addResizeHandles' : 'removeResizeHandles'));
             
             // Start appropriate operation
             if (edges.isNearEdge) {
-                startResize(element, edges, inputs);
-            } else if (element.classList.contains('isNestable') && !state.isMoving) {
-                startNesting(element, inputs);
-            } else if (!state.isMoving) {
-                startMove(element, inputs);
+                startResize(element, edges);
+            } else if (element.classList.contains('isNestable') && !state.operation) {
+                startNesting(element);
+            } else if (!state.operation) {
+                startMove(element);
             }
         }
     }
 
     // Helper function for edge detection
-    function getEdgeInfo(element, liveMouse) {
+    function getEdgeInfo(element, mouse) {
         const rect = element.getBoundingClientRect();
         const threshold = 10;
         
-        const nearLeft = liveMouse.x < rect.left + threshold;
-        const nearRight = liveMouse.x > rect.right - threshold;
-        const nearTop = liveMouse.y < rect.top + threshold;
-        const nearBottom = liveMouse.y > rect.bottom - threshold;
+        const nearLeft = mouse.x < rect.left + threshold;
+        const nearRight = mouse.x > rect.right - threshold;
+        const nearTop = mouse.y < rect.top + threshold;
+        const nearBottom = mouse.y > rect.bottom - threshold;
         
         return {
             nearLeft, nearRight, nearTop, nearBottom,
@@ -86,8 +91,9 @@
     }
 
     // Start operation functions
-    function startResize(element, edges, inputs) {
-        if (!inputs['selectedElementList'][element.id]) {
+    function startResize(element, edges) {
+        const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+        if (!inputs?.['selectedElementList']?.[element.id]) {
             console.log('Resize blocked: Element not selected');
             return;
         }
@@ -110,23 +116,25 @@
         }
         
         if (handle && window.EventsHandler) {
-            window.EventsHandler.startResize(element, handle);
+            window.EventsHandler.start('resize', element, handle); // ✅ Updated API call
         }
     }
 
-    function startMove(element, inputs) {
-        if (!inputs['selectedElementList'][element.id]) {
+    function startMove(element) {
+        const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+        if (!inputs?.['selectedElementList']?.[element.id]) {
             console.log('Move blocked: Element not selected');
             return;
         }
 
         if (window.EventsHandler) {
-            window.EventsHandler.startMove(element);
+            window.EventsHandler.start('move', element); // ✅ Updated API call
         }
     }
 
-    function startNesting(element, inputs) {
-        if (!inputs['selectedElementList'][element.id]) {
+    function startNesting(element) {
+        const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+        if (!inputs?.['selectedElementList']?.[element.id]) {
             console.log('Nesting blocked: Element not selected');
             return;
         }
@@ -137,7 +145,7 @@
         }
 
         if (window.EventsHandler) {
-            window.EventsHandler.startNesting(element);
+            window.EventsHandler.start('nesting', element); // ✅ Updated API call
         }
     }
 
@@ -148,6 +156,12 @@
             comp.style.backgroundColor = '';
             comp.classList.remove('selected');
         });
+        
+        // Clear from inputs
+        const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+        if (inputs) {
+            inputs['selectedElementList'] = {};
+        }
     }
 
     // Global helper for other behaviors to access
@@ -155,41 +169,34 @@
 
     // Add global canvas click handler for deselection
     document.addEventListener('handleCanvasInteraction', (e) => {
-        const {inputs, timeDiff} = e.detail;
-        handleCanvasDeselection(inputs, timeDiff);
+        handleCanvasDeselection(e.detail);
     });
 
-    // Add global mouse off handler for removing resize handles
+    // Add global mouse off handler for removing resize handles  
     document.addEventListener('handleMouseOff', (e) => {
-        const {inputs, state} = e.detail;
-        handleMouseOff(inputs, state);
+        handleMouseOff(e.detail);
     });
 
-    function handleCanvasDeselection(inputs, timeDiff) {
-        // Get state from Events Handler API
-        const state = window.EventsHandler?.getState() || {};
-        
-        // Block deselection for 10ms after any operation completes
-        const shouldBlockDeselect = Date.now() - (state.lastResizeTime || 0) < 10 || 
-                                   Date.now() - (state.lastMoveTime || 0) < 10 || 
-                                   Date.now() - (state.lastNestTime || 0) < 10;
-        
-        if (timeDiff < 200 && !shouldBlockDeselect) {
-            // Clear selection list
+    function handleCanvasDeselection(mouse) {
+        // Since the new Events Handler doesn't provide timing data in detail,
+        // we'll use a simpler approach
+        if (!mouse.isDragging) {
             clearAllSelections();
-            inputs['selectedElementList'] = {};
-        } else if (shouldBlockDeselect) {
-            // Deselection blocked - recent operation completed
         }
     }
 
-    function handleMouseOff(inputs, state) {
+    function handleMouseOff(mouse) {
+        const state = window.EventsHandler?.getState?.() || {};
+        
         // Remove resize handles when mouse moves off components (but not during operations)
-        if (!state.isResizing && !state.isNesting) {
-            for (const key in inputs['selectedElementList']) {
-                const selectedElement = inputs['selectedElementList'][key];
-                if (selectedElement.classList.contains('base-user-component')) {
-                    selectedElement.dispatchEvent(new CustomEvent('removeResizeHandles'));
+        if (!state.operation) {
+            const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+            if (inputs?.['selectedElementList']) {
+                for (const key in inputs['selectedElementList']) {
+                    const selectedElement = inputs['selectedElementList'][key];
+                    if (selectedElement?.classList?.contains('base-user-component')) {
+                        selectedElement.dispatchEvent(new CustomEvent('removeResizeHandles'));
+                    }
                 }
             }
         }
