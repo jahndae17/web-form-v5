@@ -90,7 +90,7 @@ window.GalleryComponentFactory = {
             'Base User Component Selection Behavior.js',
             'Base User Component Move Behavior.js',
             'Gallery Component Nesting Behavior.js',
-            'Base User Component Resize Behavior.js'
+            'Gallery Component Resize Behavior.js'
         ];
         
         const basePath = '../Components/User Level/Components/Base User Component/';
@@ -131,17 +131,22 @@ window.GalleryComponentFactory = {
             'Base User Component Selection Behavior.js',
             'Gallery Component Move Behavior.js',
             'Base User Component Nesting Behavior.js',
-            'Base User Component Resize Behavior.js'
+            'Gallery Child Resize Behavior.js'
         ];
         
         const basePath = '../Components/User Level/Components/Base User Component/';
         
         behaviors.forEach(behavior => {
             const cacheBuster = `?v=${Date.now()}`;
-            // Use different path for Gallery Component Move Behavior
-            const behaviorPath = behavior === 'Gallery Component Move Behavior.js' 
-                ? `../Components/User Level/Components/Gallery Component/${behavior}${cacheBuster}`
-                : `${basePath}${behavior}${cacheBuster}`;
+            let behaviorPath;
+            
+            if (behavior.startsWith('Gallery Component') || behavior.startsWith('Gallery Child')) {
+                // Gallery-specific behaviors are in the Gallery Component folder
+                behaviorPath = `../Components/User Level/Components/Gallery Component/${behavior}${cacheBuster}`;
+            } else {
+                // Base behaviors are in the Base User Component folder
+                behaviorPath = `${basePath}${behavior}${cacheBuster}`;
+            }
             
             fetch(behaviorPath)
                 .then(response => response.text())
@@ -183,7 +188,8 @@ window.GalleryComponentFactory = {
         let totalHeight = 20; // 10px padding top + bottom
         
         children.forEach(child => {
-            totalHeight += parseInt(child.style.height) || 80;
+            console.log('Total height:', totalHeight);
+            totalHeight += parseInt(child.style.height) || parseInt(window.getComputedStyle(child).height);
             totalHeight += 8; // Gap between children
         });
         

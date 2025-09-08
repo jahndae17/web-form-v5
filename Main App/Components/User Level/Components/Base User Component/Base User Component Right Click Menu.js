@@ -8,9 +8,13 @@
     
     // Initialize right-click menu for all base user components
     function initializeRightClickMenu() {
-        const components = document.querySelectorAll('.base-user-component');
+        const components = document.querySelectorAll('.base-user-component:not([data-right-click-initialized])');
         
         components.forEach(component => {
+            // Check if already initialized
+            if (component.dataset.rightClickInitialized) return;
+            component.dataset.rightClickInitialized = 'true';
+
             // Remove existing listeners to prevent duplicates
             component.removeEventListener('contextmenu', handleRightClick);
             component.addEventListener('contextmenu', handleRightClick);

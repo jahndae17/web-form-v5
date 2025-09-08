@@ -1,7 +1,7 @@
 (function() {
     // Base User Component Resize Behavior.js - Reactive resize handling
     
-    const components = document.querySelectorAll('.base-user-component');
+    const components = document.querySelectorAll('.base-user-component:not(.gallery-child)');
     if (!components.length) {
         console.log('No components found for resize behavior, exiting script');
         return;
@@ -21,12 +21,39 @@
         });
 
         // Reactive event listeners - respond to Events Handler
+        let addHandlesTimeout = null;
+        let removeHandlesTimeout = null;
+
         component.addEventListener('addResizeHandles', () => {
-            addResizeHandles(component);
+            // Clear any pending remove operation
+            if (removeHandlesTimeout) {
+                clearTimeout(removeHandlesTimeout);
+                removeHandlesTimeout = null;
+            }
+            
+            // Debounce add operation
+            if (!addHandlesTimeout) {
+                addHandlesTimeout = setTimeout(() => {
+                    addResizeHandles(component);
+                    addHandlesTimeout = null;
+                }, 10);
+            }
         });
 
         component.addEventListener('removeResizeHandles', () => {
-            removeResizeHandles(component);
+        // Clear any pending add operation
+        if (addHandlesTimeout) {
+            clearTimeout(addHandlesTimeout);
+            addHandlesTimeout = null;
+        }
+        
+        // Debounce remove operation
+        if (!removeHandlesTimeout) {
+            removeHandlesTimeout = setTimeout(() => {
+                removeResizeHandles(component);
+                removeHandlesTimeout = null;
+            }, 10);
+        }
         });
 
         // ✅ UPDATED: Live resize events - Fixed structure
@@ -57,6 +84,13 @@
     }
     
     function addResizeHandles(component) {
+        // Check if handles already exist
+        const existingHandles = component.querySelectorAll('.resize-handle');
+        if (existingHandles.length > 0) {
+            console.log('Resize handles already exist for:', component.id);
+            return;
+        }
+
         // Remove existing handles first
         removeResizeHandles(component);
         
