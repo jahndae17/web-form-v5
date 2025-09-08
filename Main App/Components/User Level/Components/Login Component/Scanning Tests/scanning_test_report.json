@@ -1,0 +1,691 @@
+{
+  "timestamp": "2025-09-08T07:08:08.853Z",
+  "total_tests": 22,
+  "successful": 22,
+  "failed": 0,
+  "categories": {
+    "basic": [
+      {
+        "data": "HELLO",
+        "level": "M",
+        "category": "basic",
+        "description": "Simple text",
+        "filename": "basic_HELLO",
+        "files": {
+          "diy": "basic_HELLO_diy_M.png",
+          "reference": "basic_HELLO_ref_M.png",
+          "comparison": "basic_HELLO_compare_M.png"
+        },
+        "accuracy": 74.6,
+        "differences": 112,
+        "status": "generated"
+      },
+      {
+        "data": "WORLD",
+        "level": "M",
+        "category": "basic",
+        "description": "Simple text 2",
+        "filename": "basic_WORLD",
+        "files": {
+          "diy": "basic_WORLD_diy_M.png",
+          "reference": "basic_WORLD_ref_M.png",
+          "comparison": "basic_WORLD_compare_M.png"
+        },
+        "accuracy": 78.23,
+        "differences": 96,
+        "status": "generated"
+      },
+      {
+        "data": "TEST",
+        "level": "L",
+        "category": "basic",
+        "description": "Low error correction",
+        "filename": "basic_TEST",
+        "files": {
+          "diy": "basic_TEST_diy_L.png",
+          "reference": "basic_TEST_ref_L.png",
+          "comparison": "basic_TEST_compare_L.png"
+        },
+        "accuracy": 75.51,
+        "differences": 108,
+        "status": "generated"
+      },
+      {
+        "data": "TEST",
+        "level": "H",
+        "category": "basic",
+        "description": "High error correction",
+        "filename": "basic_TEST",
+        "files": {
+          "diy": "basic_TEST_diy_H.png",
+          "reference": "basic_TEST_ref_H.png",
+          "comparison": "basic_TEST_compare_H.png"
+        },
+        "accuracy": 73.24,
+        "differences": 118,
+        "status": "generated"
+      }
+    ],
+    "numeric": [
+      {
+        "data": "1234567890",
+        "level": "M",
+        "category": "numeric",
+        "description": "Pure numeric",
+        "filename": "numeric_1234567890",
+        "files": {
+          "diy": "numeric_1234567890_diy_M.png",
+          "reference": "numeric_1234567890_ref_M.png",
+          "comparison": "numeric_1234567890_compare_M.png"
+        },
+        "accuracy": 74.15,
+        "differences": 114,
+        "status": "generated"
+      },
+      {
+        "data": "9876543210",
+        "level": "M",
+        "category": "numeric",
+        "description": "Numeric reverse",
+        "filename": "numeric_9876543210",
+        "files": {
+          "diy": "numeric_9876543210_diy_M.png",
+          "reference": "numeric_9876543210_ref_M.png",
+          "comparison": "numeric_9876543210_compare_M.png"
+        },
+        "accuracy": 74.6,
+        "differences": 112,
+        "status": "generated"
+      }
+    ],
+    "alphanumeric": [
+      {
+        "data": "HELLO WORLD",
+        "level": "M",
+        "category": "alphanumeric",
+        "description": "Alphanumeric mode",
+        "filename": "alphanumeric_HELLO_WORLD",
+        "files": {
+          "diy": "alphanumeric_HELLO_WORLD_diy_M.png",
+          "reference": "alphanumeric_HELLO_WORLD_ref_M.png",
+          "comparison": "alphanumeric_HELLO_WORLD_compare_M.png"
+        },
+        "accuracy": 73.7,
+        "differences": 116,
+        "status": "generated"
+      },
+      {
+        "data": "ABC123XYZ",
+        "level": "M",
+        "category": "alphanumeric",
+        "description": "Mixed alphanumeric",
+        "filename": "alphanumeric_ABC123XYZ",
+        "files": {
+          "diy": "alphanumeric_ABC123XYZ_diy_M.png",
+          "reference": "alphanumeric_ABC123XYZ_ref_M.png",
+          "comparison": "alphanumeric_ABC123XYZ_compare_M.png"
+        },
+        "accuracy": 0,
+        "status": "generated"
+      }
+    ],
+    "url": [
+      {
+        "data": "https://google.com",
+        "level": "M",
+        "category": "url",
+        "description": "HTTPS URL",
+        "filename": "url_https_google_com",
+        "files": {
+          "diy": "url_https_google_com_diy_M.png",
+          "reference": "url_https_google_com_ref_M.png",
+          "comparison": "url_https_google_com_compare_M.png"
+        },
+        "accuracy": 0,
+        "status": "generated"
+      },
+      {
+        "data": "http://example.com",
+        "level": "M",
+        "category": "url",
+        "description": "HTTP URL",
+        "filename": "url_http_example_com",
+        "files": {
+          "diy": "url_http_example_com_diy_M.png",
+          "reference": "url_http_example_com_ref_M.png",
+          "comparison": "url_http_example_com_compare_M.png"
+        },
+        "accuracy": 68.8,
+        "differences": 195,
+        "status": "generated"
+      },
+      {
+        "data": "https://github.com/test",
+        "level": "M",
+        "category": "url",
+        "description": "GitHub URL",
+        "filename": "url_https_github_com_t",
+        "files": {
+          "diy": "url_https_github_com_t_diy_M.png",
+          "reference": "url_https_github_com_t_ref_M.png",
+          "comparison": "url_https_github_com_t_compare_M.png"
+        },
+        "accuracy": 67.68,
+        "differences": 202,
+        "status": "generated"
+      }
+    ],
+    "email": [
+      {
+        "data": "test@email.com",
+        "level": "M",
+        "category": "email",
+        "description": "Email address",
+        "filename": "email_test_email_com",
+        "files": {
+          "diy": "email_test_email_com_diy_M.png",
+          "reference": "email_test_email_com_ref_M.png",
+          "comparison": "email_test_email_com_compare_M.png"
+        },
+        "accuracy": 0,
+        "status": "generated"
+      },
+      {
+        "data": "mailto:test@email.com",
+        "level": "M",
+        "category": "email",
+        "description": "Mailto link",
+        "filename": "email_mailto_test_email_co",
+        "files": {
+          "diy": "email_mailto_test_email_co_diy_M.png",
+          "reference": "email_mailto_test_email_co_ref_M.png",
+          "comparison": "email_mailto_test_email_co_compare_M.png"
+        },
+        "accuracy": 71.52,
+        "differences": 178,
+        "status": "generated"
+      }
+    ],
+    "special": [
+      {
+        "data": "Hello, World!",
+        "level": "M",
+        "category": "special",
+        "description": "With punctuation",
+        "filename": "special_Hello_World",
+        "files": {
+          "diy": "special_Hello_World_diy_M.png",
+          "reference": "special_Hello_World_ref_M.png",
+          "comparison": "special_Hello_World_compare_M.png"
+        },
+        "accuracy": 76.42,
+        "differences": 104,
+        "status": "generated"
+      },
+      {
+        "data": "Test@#$%^&*()",
+        "level": "M",
+        "category": "special",
+        "description": "Special characters",
+        "filename": "special_Test",
+        "files": {
+          "diy": "special_Test_diy_M.png",
+          "reference": "special_Test_ref_M.png",
+          "comparison": "special_Test_compare_M.png"
+        },
+        "accuracy": 0,
+        "status": "generated"
+      }
+    ],
+    "length": [
+      {
+        "data": "A",
+        "level": "M",
+        "category": "length",
+        "description": "Single character",
+        "filename": "length_A",
+        "files": {
+          "diy": "length_A_diy_M.png",
+          "reference": "length_A_ref_M.png",
+          "comparison": "length_A_compare_M.png"
+        },
+        "accuracy": 76.87,
+        "differences": 102,
+        "status": "generated"
+      },
+      {
+        "data": "AB",
+        "level": "M",
+        "category": "length",
+        "description": "Two characters",
+        "filename": "length_AB",
+        "files": {
+          "diy": "length_AB_diy_M.png",
+          "reference": "length_AB_ref_M.png",
+          "comparison": "length_AB_compare_M.png"
+        },
+        "accuracy": 79.14,
+        "differences": 92,
+        "status": "generated"
+      },
+      {
+        "data": "ABC",
+        "level": "M",
+        "category": "length",
+        "description": "Three characters",
+        "filename": "length_ABC",
+        "files": {
+          "diy": "length_ABC_diy_M.png",
+          "reference": "length_ABC_ref_M.png",
+          "comparison": "length_ABC_compare_M.png"
+        },
+        "accuracy": 77.32,
+        "differences": 100,
+        "status": "generated"
+      },
+      {
+        "data": "This is a longer test string for QR code",
+        "level": "M",
+        "category": "length",
+        "description": "Long string",
+        "filename": "length_This_is_a_longer_tes",
+        "files": {
+          "diy": "length_This_is_a_longer_tes_diy_M.png",
+          "reference": "length_This_is_a_longer_tes_ref_M.png",
+          "comparison": "length_This_is_a_longer_tes_compare_M.png"
+        },
+        "accuracy": 62.31,
+        "differences": 317,
+        "status": "generated"
+      }
+    ],
+    "wifi": [
+      {
+        "data": "WiFi:T:WPA;S:TestNetwork;P:password123;;",
+        "level": "M",
+        "category": "wifi",
+        "description": "WiFi credentials",
+        "filename": "wifi_WiFi_T_WPA_S_TestNet",
+        "files": {
+          "diy": "wifi_WiFi_T_WPA_S_TestNet_diy_M.png",
+          "reference": "wifi_WiFi_T_WPA_S_TestNet_ref_M.png",
+          "comparison": "wifi_WiFi_T_WPA_S_TestNet_compare_M.png"
+        },
+        "accuracy": 63.14,
+        "differences": 310,
+        "status": "generated"
+      }
+    ],
+    "contact": [
+      {
+        "data": "tel:+1234567890",
+        "level": "M",
+        "category": "contact",
+        "description": "Phone number",
+        "filename": "contact_tel_1234567890",
+        "files": {
+          "diy": "contact_tel_1234567890_diy_M.png",
+          "reference": "contact_tel_1234567890_ref_M.png",
+          "comparison": "contact_tel_1234567890_compare_M.png"
+        },
+        "accuracy": 0,
+        "status": "generated"
+      },
+      {
+        "data": "sms:+1234567890:Hello World",
+        "level": "M",
+        "category": "contact",
+        "description": "SMS message",
+        "filename": "contact_sms_1234567890_Hell",
+        "files": {
+          "diy": "contact_sms_1234567890_Hell_diy_M.png",
+          "reference": "contact_sms_1234567890_Hell_ref_M.png",
+          "comparison": "contact_sms_1234567890_Hell_compare_M.png"
+        },
+        "accuracy": 66.24,
+        "differences": 211,
+        "status": "generated"
+      }
+    ]
+  },
+  "accuracy_stats": {
+    "average": 56.066818181818185,
+    "min": 0,
+    "max": 79.14,
+    "count": 22
+  },
+  "scanning_instructions": [
+    "1. Open a QR code scanner app on your phone",
+    "2. Scan each QR code in the test folders",
+    "3. Compare the scanned data with the expected data",
+    "4. Note any differences or scan failures",
+    "5. Test both DIY and reference versions for comparison"
+  ],
+  "test_results": [
+    {
+      "data": "HELLO",
+      "level": "M",
+      "category": "basic",
+      "description": "Simple text",
+      "filename": "basic_HELLO",
+      "files": {
+        "diy": "basic_HELLO_diy_M.png",
+        "reference": "basic_HELLO_ref_M.png",
+        "comparison": "basic_HELLO_compare_M.png"
+      },
+      "accuracy": 74.6,
+      "differences": 112,
+      "status": "generated"
+    },
+    {
+      "data": "WORLD",
+      "level": "M",
+      "category": "basic",
+      "description": "Simple text 2",
+      "filename": "basic_WORLD",
+      "files": {
+        "diy": "basic_WORLD_diy_M.png",
+        "reference": "basic_WORLD_ref_M.png",
+        "comparison": "basic_WORLD_compare_M.png"
+      },
+      "accuracy": 78.23,
+      "differences": 96,
+      "status": "generated"
+    },
+    {
+      "data": "TEST",
+      "level": "L",
+      "category": "basic",
+      "description": "Low error correction",
+      "filename": "basic_TEST",
+      "files": {
+        "diy": "basic_TEST_diy_L.png",
+        "reference": "basic_TEST_ref_L.png",
+        "comparison": "basic_TEST_compare_L.png"
+      },
+      "accuracy": 75.51,
+      "differences": 108,
+      "status": "generated"
+    },
+    {
+      "data": "TEST",
+      "level": "H",
+      "category": "basic",
+      "description": "High error correction",
+      "filename": "basic_TEST",
+      "files": {
+        "diy": "basic_TEST_diy_H.png",
+        "reference": "basic_TEST_ref_H.png",
+        "comparison": "basic_TEST_compare_H.png"
+      },
+      "accuracy": 73.24,
+      "differences": 118,
+      "status": "generated"
+    },
+    {
+      "data": "1234567890",
+      "level": "M",
+      "category": "numeric",
+      "description": "Pure numeric",
+      "filename": "numeric_1234567890",
+      "files": {
+        "diy": "numeric_1234567890_diy_M.png",
+        "reference": "numeric_1234567890_ref_M.png",
+        "comparison": "numeric_1234567890_compare_M.png"
+      },
+      "accuracy": 74.15,
+      "differences": 114,
+      "status": "generated"
+    },
+    {
+      "data": "9876543210",
+      "level": "M",
+      "category": "numeric",
+      "description": "Numeric reverse",
+      "filename": "numeric_9876543210",
+      "files": {
+        "diy": "numeric_9876543210_diy_M.png",
+        "reference": "numeric_9876543210_ref_M.png",
+        "comparison": "numeric_9876543210_compare_M.png"
+      },
+      "accuracy": 74.6,
+      "differences": 112,
+      "status": "generated"
+    },
+    {
+      "data": "HELLO WORLD",
+      "level": "M",
+      "category": "alphanumeric",
+      "description": "Alphanumeric mode",
+      "filename": "alphanumeric_HELLO_WORLD",
+      "files": {
+        "diy": "alphanumeric_HELLO_WORLD_diy_M.png",
+        "reference": "alphanumeric_HELLO_WORLD_ref_M.png",
+        "comparison": "alphanumeric_HELLO_WORLD_compare_M.png"
+      },
+      "accuracy": 73.7,
+      "differences": 116,
+      "status": "generated"
+    },
+    {
+      "data": "ABC123XYZ",
+      "level": "M",
+      "category": "alphanumeric",
+      "description": "Mixed alphanumeric",
+      "filename": "alphanumeric_ABC123XYZ",
+      "files": {
+        "diy": "alphanumeric_ABC123XYZ_diy_M.png",
+        "reference": "alphanumeric_ABC123XYZ_ref_M.png",
+        "comparison": "alphanumeric_ABC123XYZ_compare_M.png"
+      },
+      "accuracy": 0,
+      "status": "generated"
+    },
+    {
+      "data": "https://google.com",
+      "level": "M",
+      "category": "url",
+      "description": "HTTPS URL",
+      "filename": "url_https_google_com",
+      "files": {
+        "diy": "url_https_google_com_diy_M.png",
+        "reference": "url_https_google_com_ref_M.png",
+        "comparison": "url_https_google_com_compare_M.png"
+      },
+      "accuracy": 0,
+      "status": "generated"
+    },
+    {
+      "data": "http://example.com",
+      "level": "M",
+      "category": "url",
+      "description": "HTTP URL",
+      "filename": "url_http_example_com",
+      "files": {
+        "diy": "url_http_example_com_diy_M.png",
+        "reference": "url_http_example_com_ref_M.png",
+        "comparison": "url_http_example_com_compare_M.png"
+      },
+      "accuracy": 68.8,
+      "differences": 195,
+      "status": "generated"
+    },
+    {
+      "data": "https://github.com/test",
+      "level": "M",
+      "category": "url",
+      "description": "GitHub URL",
+      "filename": "url_https_github_com_t",
+      "files": {
+        "diy": "url_https_github_com_t_diy_M.png",
+        "reference": "url_https_github_com_t_ref_M.png",
+        "comparison": "url_https_github_com_t_compare_M.png"
+      },
+      "accuracy": 67.68,
+      "differences": 202,
+      "status": "generated"
+    },
+    {
+      "data": "test@email.com",
+      "level": "M",
+      "category": "email",
+      "description": "Email address",
+      "filename": "email_test_email_com",
+      "files": {
+        "diy": "email_test_email_com_diy_M.png",
+        "reference": "email_test_email_com_ref_M.png",
+        "comparison": "email_test_email_com_compare_M.png"
+      },
+      "accuracy": 0,
+      "status": "generated"
+    },
+    {
+      "data": "mailto:test@email.com",
+      "level": "M",
+      "category": "email",
+      "description": "Mailto link",
+      "filename": "email_mailto_test_email_co",
+      "files": {
+        "diy": "email_mailto_test_email_co_diy_M.png",
+        "reference": "email_mailto_test_email_co_ref_M.png",
+        "comparison": "email_mailto_test_email_co_compare_M.png"
+      },
+      "accuracy": 71.52,
+      "differences": 178,
+      "status": "generated"
+    },
+    {
+      "data": "Hello, World!",
+      "level": "M",
+      "category": "special",
+      "description": "With punctuation",
+      "filename": "special_Hello_World",
+      "files": {
+        "diy": "special_Hello_World_diy_M.png",
+        "reference": "special_Hello_World_ref_M.png",
+        "comparison": "special_Hello_World_compare_M.png"
+      },
+      "accuracy": 76.42,
+      "differences": 104,
+      "status": "generated"
+    },
+    {
+      "data": "Test@#$%^&*()",
+      "level": "M",
+      "category": "special",
+      "description": "Special characters",
+      "filename": "special_Test",
+      "files": {
+        "diy": "special_Test_diy_M.png",
+        "reference": "special_Test_ref_M.png",
+        "comparison": "special_Test_compare_M.png"
+      },
+      "accuracy": 0,
+      "status": "generated"
+    },
+    {
+      "data": "A",
+      "level": "M",
+      "category": "length",
+      "description": "Single character",
+      "filename": "length_A",
+      "files": {
+        "diy": "length_A_diy_M.png",
+        "reference": "length_A_ref_M.png",
+        "comparison": "length_A_compare_M.png"
+      },
+      "accuracy": 76.87,
+      "differences": 102,
+      "status": "generated"
+    },
+    {
+      "data": "AB",
+      "level": "M",
+      "category": "length",
+      "description": "Two characters",
+      "filename": "length_AB",
+      "files": {
+        "diy": "length_AB_diy_M.png",
+        "reference": "length_AB_ref_M.png",
+        "comparison": "length_AB_compare_M.png"
+      },
+      "accuracy": 79.14,
+      "differences": 92,
+      "status": "generated"
+    },
+    {
+      "data": "ABC",
+      "level": "M",
+      "category": "length",
+      "description": "Three characters",
+      "filename": "length_ABC",
+      "files": {
+        "diy": "length_ABC_diy_M.png",
+        "reference": "length_ABC_ref_M.png",
+        "comparison": "length_ABC_compare_M.png"
+      },
+      "accuracy": 77.32,
+      "differences": 100,
+      "status": "generated"
+    },
+    {
+      "data": "This is a longer test string for QR code",
+      "level": "M",
+      "category": "length",
+      "description": "Long string",
+      "filename": "length_This_is_a_longer_tes",
+      "files": {
+        "diy": "length_This_is_a_longer_tes_diy_M.png",
+        "reference": "length_This_is_a_longer_tes_ref_M.png",
+        "comparison": "length_This_is_a_longer_tes_compare_M.png"
+      },
+      "accuracy": 62.31,
+      "differences": 317,
+      "status": "generated"
+    },
+    {
+      "data": "WiFi:T:WPA;S:TestNetwork;P:password123;;",
+      "level": "M",
+      "category": "wifi",
+      "description": "WiFi credentials",
+      "filename": "wifi_WiFi_T_WPA_S_TestNet",
+      "files": {
+        "diy": "wifi_WiFi_T_WPA_S_TestNet_diy_M.png",
+        "reference": "wifi_WiFi_T_WPA_S_TestNet_ref_M.png",
+        "comparison": "wifi_WiFi_T_WPA_S_TestNet_compare_M.png"
+      },
+      "accuracy": 63.14,
+      "differences": 310,
+      "status": "generated"
+    },
+    {
+      "data": "tel:+1234567890",
+      "level": "M",
+      "category": "contact",
+      "description": "Phone number",
+      "filename": "contact_tel_1234567890",
+      "files": {
+        "diy": "contact_tel_1234567890_diy_M.png",
+        "reference": "contact_tel_1234567890_ref_M.png",
+        "comparison": "contact_tel_1234567890_compare_M.png"
+      },
+      "accuracy": 0,
+      "status": "generated"
+    },
+    {
+      "data": "sms:+1234567890:Hello World",
+      "level": "M",
+      "category": "contact",
+      "description": "SMS message",
+      "filename": "contact_sms_1234567890_Hell",
+      "files": {
+        "diy": "contact_sms_1234567890_Hell_diy_M.png",
+        "reference": "contact_sms_1234567890_Hell_ref_M.png",
+        "comparison": "contact_sms_1234567890_Hell_compare_M.png"
+      },
+      "accuracy": 66.24,
+      "differences": 211,
+      "status": "generated"
+    }
+  ]
+}

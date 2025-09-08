@@ -1,0 +1,266 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Optimization Comparison</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        h1 { color: #333; text-align: center; }
+        .test-case { background: white; margin: 20px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .qr-comparison { display: flex; gap: 20px; justify-content: space-around; flex-wrap: wrap; }
+        .qr-set { text-align: center; }
+        .qr-set img { max-width: 200px; border: 2px solid #ddd; border-radius: 4px; }
+        .qr-set h4 { margin: 10px 0 5px 0; color: #555; }
+        .data-info { background: #e8f4fd; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .expected-improvement { background: #e8f6e8; padding: 15px; border-radius: 4px; margin-top: 15px; }
+        .instructions { background: #fff3cd; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .emoji { font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h1>📱 Scanner Optimization Comparison Test</h1>
+    
+    <div class="instructions">
+        <h3>🎯 Testing Instructions:</h3>
+        <ol>
+            <li>Use your phone's camera or QR scanner app</li>
+            <li>Scan each QR code in the comparison sets below</li>
+            <li>Record which ones scan successfully</li>
+            <li>Compare the success rates between ORIGINAL, OPTIMIZED, and REFERENCE</li>
+        </ol>
+        <p><strong>Expected Results:</strong> OPTIMIZED should have significantly higher scanning success than ORIGINAL</p>
+    </div>
+
+    
+    <div class="test-case">
+        <h2>🧪 Test Case: "TEST"</h2>
+        
+        <div class="data-info">
+            <strong>Data:</strong> TEST<br>
+            <strong>Error Level:</strong> H<br>
+            <strong>Length:</strong> 4 characters<br>
+            <strong>Contains Special Chars:</strong> No
+        </div>
+        
+        <div class="qr-comparison">
+            <div class="qr-set">
+                <h4>🔧 ORIGINAL (ISO-Strict)</h4>
+                <img src="basic_TEST_ORIGINAL.png" alt="Original QR Code">
+                <p>Standard ISO implementation</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📱 OPTIMIZED (Scanner-Friendly)</h4>
+                <img src="basic_TEST_OPTIMIZED.png" alt="Optimized QR Code">
+                <p>Enhanced for phone scanning</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📚 REFERENCE (qrcode library)</h4>
+                <img src="basic_TEST_REFERENCE.png" alt="Reference QR Code">
+                <p>Industry standard library</p>
+            </div>
+        </div>
+        
+        <div class="expected-improvement">
+            <h4>🎯 Expected Optimization for "TEST":</h4>
+            <ul>
+                <li>✅ Short data: Auto-upgraded to High error correction</li>
+                
+                
+                
+                <li>✅ Scanner-friendly mask pattern selection</li>
+                <li>✅ Phone camera optimization prioritized</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h2>🧪 Test Case: "test@email.com"</h2>
+        
+        <div class="data-info">
+            <strong>Data:</strong> test@email.com<br>
+            <strong>Error Level:</strong> M<br>
+            <strong>Length:</strong> 14 characters<br>
+            <strong>Contains Special Chars:</strong> Yes
+        </div>
+        
+        <div class="qr-comparison">
+            <div class="qr-set">
+                <h4>🔧 ORIGINAL (ISO-Strict)</h4>
+                <img src="email_test_email_com_ORIGINAL.png" alt="Original QR Code">
+                <p>Standard ISO implementation</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📱 OPTIMIZED (Scanner-Friendly)</h4>
+                <img src="email_test_email_com_OPTIMIZED.png" alt="Optimized QR Code">
+                <p>Enhanced for phone scanning</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📚 REFERENCE (qrcode library)</h4>
+                <img src="email_test_email_com_REFERENCE.png" alt="Reference QR Code">
+                <p>Industry standard library</p>
+            </div>
+        </div>
+        
+        <div class="expected-improvement">
+            <h4>🎯 Expected Optimization for "test@email.com":</h4>
+            <ul>
+                
+                <li>✅ Email address: Enhanced error correction for @ symbol</li>
+                
+                <li>✅ Special characters: Better handling of punctuation</li>
+                <li>✅ Scanner-friendly mask pattern selection</li>
+                <li>✅ Phone camera optimization prioritized</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h2>🧪 Test Case: "AB"</h2>
+        
+        <div class="data-info">
+            <strong>Data:</strong> AB<br>
+            <strong>Error Level:</strong> M<br>
+            <strong>Length:</strong> 2 characters<br>
+            <strong>Contains Special Chars:</strong> No
+        </div>
+        
+        <div class="qr-comparison">
+            <div class="qr-set">
+                <h4>🔧 ORIGINAL (ISO-Strict)</h4>
+                <img src="length_AB_ORIGINAL.png" alt="Original QR Code">
+                <p>Standard ISO implementation</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📱 OPTIMIZED (Scanner-Friendly)</h4>
+                <img src="length_AB_OPTIMIZED.png" alt="Optimized QR Code">
+                <p>Enhanced for phone scanning</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📚 REFERENCE (qrcode library)</h4>
+                <img src="length_AB_REFERENCE.png" alt="Reference QR Code">
+                <p>Industry standard library</p>
+            </div>
+        </div>
+        
+        <div class="expected-improvement">
+            <h4>🎯 Expected Optimization for "AB":</h4>
+            <ul>
+                <li>✅ Short data: Auto-upgraded to High error correction</li>
+                
+                
+                
+                <li>✅ Scanner-friendly mask pattern selection</li>
+                <li>✅ Phone camera optimization prioritized</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h2>🧪 Test Case: "WiFi:T:WPA;S:TestNetwork;P:password123;;"</h2>
+        
+        <div class="data-info">
+            <strong>Data:</strong> WiFi:T:WPA;S:TestNetwork;P:password123;;<br>
+            <strong>Error Level:</strong> M<br>
+            <strong>Length:</strong> 40 characters<br>
+            <strong>Contains Special Chars:</strong> Yes
+        </div>
+        
+        <div class="qr-comparison">
+            <div class="qr-set">
+                <h4>🔧 ORIGINAL (ISO-Strict)</h4>
+                <img src="wifi_WiFi_T_WPA_S_TestNet_ORIGINAL.png" alt="Original QR Code">
+                <p>Standard ISO implementation</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📱 OPTIMIZED (Scanner-Friendly)</h4>
+                <img src="wifi_WiFi_T_WPA_S_TestNet_OPTIMIZED.png" alt="Optimized QR Code">
+                <p>Enhanced for phone scanning</p>
+            </div>
+            
+            <div class="qr-set">
+                <h4>📚 REFERENCE (qrcode library)</h4>
+                <img src="wifi_WiFi_T_WPA_S_TestNet_REFERENCE.png" alt="Reference QR Code">
+                <p>Industry standard library</p>
+            </div>
+        </div>
+        
+        <div class="expected-improvement">
+            <h4>🎯 Expected Optimization for "WiFi:T:WPA;S:TestNetwork;P:password123;;":</h4>
+            <ul>
+                
+                
+                <li>✅ Structured data: Higher error correction for WiFi credentials</li>
+                <li>✅ Special characters: Better handling of punctuation</li>
+                <li>✅ Scanner-friendly mask pattern selection</li>
+                <li>✅ Phone camera optimization prioritized</li>
+            </ul>
+        </div>
+    </div>
+    
+    
+    <div class="test-case">
+        <h2>📊 Results Summary</h2>
+        <p>Use this table to record your scanning results:</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <tr style="background: #f0f0f0;">
+                <th style="border: 1px solid #ddd; padding: 8px;">Test Case</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">ORIGINAL</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">OPTIMIZED</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">REFERENCE</th>
+            </tr>
+            
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">TEST</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+            </tr>
+            
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">test@email.com</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+            </tr>
+            
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">AB</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+            </tr>
+            
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">WiFi:T:WPA;S:TestNetwork;P:password123;;</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">□ ✅ / ❌</td>
+            </tr>
+            
+        </table>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+            <h4>🎯 Success Rate Targets:</h4>
+            <ul>
+                <li><strong>ORIGINAL:</strong> ~77% (3/4 cases) - Known baseline from previous testing</li>
+                <li><strong>OPTIMIZED:</strong> ~95%+ (4/4 cases) - Target with scanner enhancements</li>
+                <li><strong>REFERENCE:</strong> 100% (4/4 cases) - Industry standard benchmark</li>
+            </ul>
+        </div>
+    </div>
+    
+    <footer style="text-align: center; margin-top: 40px; color: #666;">
+        <p>Generated: 9/8/2025, 5:21:53 PM</p>
+        <p>🚀 Scanner Optimization Test - DIY QR Code Generator</p>
+    </footer>
+</body>
+</html>
