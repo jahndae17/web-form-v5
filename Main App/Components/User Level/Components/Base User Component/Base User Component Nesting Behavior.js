@@ -100,8 +100,17 @@
         
         // Find target at current position
         element.style.visibility = 'hidden';
-        const targetElement = document.elementFromPoint(centerX, centerY);
+        let targetElement = document.elementFromPoint(centerX, centerY);
         element.style.visibility = 'visible';
+        
+        // If target is a gallery child, check if its parent gallery accepts children
+        if (targetElement && targetElement.classList.contains('gallery-child')) {
+            const parentGallery = targetElement.closest('.gallery-component');
+            if (parentGallery && parentGallery.classList.contains('acceptsChildren')) {
+                console.log('Target is gallery child, redirecting to parent gallery:', parentGallery.id);
+                targetElement = parentGallery;
+            }
+        }
         
         // Validate nesting target
         console.log('Nesting validation:', {

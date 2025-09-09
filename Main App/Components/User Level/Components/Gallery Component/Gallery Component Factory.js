@@ -27,6 +27,7 @@ window.GalleryComponentFactory = {
         gallery.id = galleryId;
         
         // Set default position or use provided options
+        gallery.style.position = 'absolute'; // Ensure gallery is positioned
         gallery.style.left = options.left || '220px';
         gallery.style.top = options.top || '10px';
         gallery.style.width = options.width || '300px';
@@ -65,8 +66,8 @@ window.GalleryComponentFactory = {
         const galleryWidth = parseInt(gallery.style.width) || 300;
         child.style.width = (galleryWidth - 20) + 'px'; // 10px padding on each side
         child.style.height = options.height || '80px';
-        child.style.position = 'relative';
-        child.style.marginBottom = '8px'; // Gap between children
+        child.style.position = 'absolute'; // Use absolute positioning within gallery
+        child.style.marginBottom = '0px'; // No margin needed with absolute positioning
         
         // Add to gallery
         gallery.appendChild(child);
@@ -219,7 +220,7 @@ window.GalleryComponentFactory = {
             child.style.top = currentY + 'px';
             
             // Update currentY for next child (height + gap)
-            const childHeight = parseInt(child.style.height) || 80;
+            const childHeight = parseInt(child.style.height) || parseInt(window.getComputedStyle(child).height);
             currentY += childHeight + 8; // 8px gap between children
         });
         

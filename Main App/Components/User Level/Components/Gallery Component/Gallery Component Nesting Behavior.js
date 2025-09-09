@@ -33,23 +33,37 @@
         component.classList.add('ResizableY');
         component.setAttribute('data-component', 'gallery-child');
 
+        // IMPORTANT: Clear any transform or drag-related styling
+        component.style.transform = '';
+        component.style.zIndex = '';
+        component.style.visibility = 'visible';
+        
         // Set child dimensions - width controlled by gallery, height resizable
         const galleryWidth = parseInt(gallery.style.width) || 300;
         component.style.width = (galleryWidth - 20) + 'px'; // 10px padding on each side
-        component.style.position = 'relative';
-        component.style.marginBottom = '8px'; // Gap between children
+        component.style.position = 'absolute'; // Use absolute positioning within gallery
+        component.style.marginBottom = '0px'; // No margin needed with absolute positioning
+        
+        // CRITICAL: Reset positioning immediately to prevent visual glitches
         component.style.left = '10px'; // Reset left position for gallery layout
-        component.style.top = '0px'; // Will be recalculated by updateChildWidths
+        component.style.top = '10px'; // Temporary position, will be recalculated
+        
+        console.log('Component positioning reset for gallery layout:', component.id);
 
         // Load gallery child behaviors
         if (window.GalleryComponentFactory) {
             window.GalleryComponentFactory.loadChildBehaviors(component.id);
             
-            // Update gallery layout
+            // Update gallery layout - use immediate execution to prevent timing issues
+            window.GalleryComponentFactory.updateChildWidths(gallery);
+            window.GalleryComponentFactory.updateGalleryHeight(gallery);
+            
+            // Force a second update after a brief delay to ensure proper positioning
             setTimeout(() => {
-                window.GalleryComponentFactory.updateGalleryHeight(gallery);
                 window.GalleryComponentFactory.updateChildWidths(gallery);
-            }, 100);
+                window.GalleryComponentFactory.updateGalleryHeight(gallery);
+                console.log('Gallery layout updated for:', component.id);
+            }, 50);
         }
 
         console.log('Component converted to gallery child:', component.id);
