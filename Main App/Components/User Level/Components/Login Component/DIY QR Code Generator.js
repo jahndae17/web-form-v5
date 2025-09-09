@@ -24,9 +24,14 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class DIYQRCodeGenerator {
-    constructor() {
+    constructor(options = {}) {
         this.initializeTables();
         this.initializeGaloisField();
+        
+        // Scanner compatibility mode options
+        this.scannerOptimized = options.scannerOptimized !== false; // Default: true
+        this.scannerFriendlyMasks = [0, 1, 2, 6]; // Masks that work well with phone cameras
+        this.errorCorrectionUpgrade = options.errorCorrectionUpgrade !== false; // Default: true
     }
 
     initializeTables() {
@@ -709,6 +714,41 @@ class DIYQRCodeGenerator {
         return bestMask;
     }
 
+    // 📱 Scanner-Optimized Mask Selection
+    selectBestMaskForScanning(matrix) {
+        if (!this.scannerOptimized) {
+            return this.selectBestMask(matrix);
+        }
+        
+        let bestMask = 0;
+        let lowestPenalty = Infinity;
+        let penalties = [];
+        
+        // Calculate penalties for all masks
+        for (let mask = 0; mask < 8; mask++) {
+            const testMatrix = matrix.map(row => [...row]);
+            this.applyMask(testMatrix, mask);
+            const penalty = this.calculateMaskPenalty(testMatrix);
+            penalties[mask] = penalty;
+            
+            if (penalty < lowestPenalty) {
+                lowestPenalty = penalty;
+                bestMask = mask;
+            }
+        }
+        
+        // Scanner optimization: Prefer scanner-friendly masks when penalties are close
+        const penaltyThreshold = 100; // If penalties are within 100 points, prefer scanner-friendly mask
+        
+        for (let mask of this.scannerFriendlyMasks) {
+            if (Math.abs(penalties[mask] - lowestPenalty) <= penaltyThreshold) {
+                return mask; // Use scanner-friendly mask if penalty is close enough
+            }
+        }
+        
+        return bestMask; // Fall back to mathematically optimal mask
+    }
+
     calculateMaskPenalty(matrix) {
         // ISO/IEC 18004:2015 Section 7.8.3.1-7.8.3.4 - Penalty rules
         let penalty = 0;
@@ -891,12 +931,18 @@ class DIYQRCodeGenerator {
         console.log(`📝 Data: "${data}"`);
         console.log(`🛡️  Error Level: ${errorLevel}`);
         
+        // Scanner optimization: Smart error correction upgrade
+        const optimizedErrorLevel = this.optimizeErrorCorrectionForScanning(data, errorLevel);
+        if (optimizedErrorLevel !== errorLevel) {
+            console.log(`📱 Scanner optimized: ${errorLevel} → ${optimizedErrorLevel} (better scanning reliability)`);
+        }
+        
         // Step 1: Data analysis
         const mode = this.analyzeData(data);
         console.log(`🎯 Mode: ${Object.keys(this.MODE)[Object.values(this.MODE).indexOf(mode)]}`);
         
         // Step 2: Determine version
-        const version = this.determineVersion(data, mode, errorLevel);
+        const version = this.determineVersion(data, mode, optimizedErrorLevel);
         console.log(`📏 Version: ${version} (${this.VERSION_INFO[version].size}x${this.VERSION_INFO[version].size})`);
         
         // Step 3: Encode data
@@ -904,12 +950,12 @@ class DIYQRCodeGenerator {
         console.log(`💾 Encoded: ${encodedData.length} bits`);
         
         // Step 4: Add padding
-        const capacity = this.getTotalDataCapacity(version, errorLevel);
+        const capacity = this.getTotalDataCapacity(version, optimizedErrorLevel);
         const paddedData = this.addTerminatorAndPadding(encodedData, capacity * 8);
         console.log(`📦 Padded: ${paddedData.length} bits (${paddedData.length / 8} bytes)`);
         
         // Step 5: Error correction
-        const errorLevelIndex = this.ERROR_LEVELS[errorLevel];
+        const errorLevelIndex = this.ERROR_LEVELS[optimizedErrorLevel];
         const correctedData = this.addErrorCorrection(paddedData, version, errorLevelIndex);
         console.log(`🛡️  Error Corrected: ${correctedData.length} bits`);
         
@@ -921,10 +967,10 @@ class DIYQRCodeGenerator {
         this.placeData(matrix, correctedData);
         console.log(`📍 Data placed`);
         
-        // Step 8: Select and apply mask
-        const bestMask = this.selectBestMask(matrix);
+        // Step 8: Select and apply mask (with scanner optimization)
+        const bestMask = this.selectBestMaskForScanning(matrix);
         this.applyMask(matrix, bestMask);
-        console.log(`🎭 Best mask: ${bestMask}`);
+        console.log(`🎭 Best mask: ${bestMask} ${this.scannerOptimized ? '(scanner-optimized)' : ''}`);
         
         // Step 9: Place format information
         this.placeFormatInfo(matrix, errorLevelIndex, bestMask);
@@ -963,6 +1009,42 @@ class DIYQRCodeGenerator {
             }
         }
         return 1; // Fallback
+    }
+
+    // 📱 Scanner Optimization: Smart Error Correction Upgrade
+    optimizeErrorCorrectionForScanning(data, requestedLevel) {
+        // If scanner optimization is disabled, return the requested level
+        if (!this.scannerOptimized || !this.errorCorrectionUpgrade) {
+            return requestedLevel;
+        }
+        
+        // Rule 1: Short data (< 10 characters) - upgrade to High for better scanning
+        if (data.length < 10 && requestedLevel !== 'H') {
+            return 'H';
+        }
+        
+        // Rule 2: Email addresses - prefer High error correction for reliability
+        if (data.includes('@') && requestedLevel === 'M') {
+            return 'H';
+        }
+        
+        // Rule 3: URLs and structured data - prefer High for complex patterns
+        if ((data.includes('://') || data.includes('mailto:') || data.includes('tel:') || 
+             data.includes('WiFi:') || data.includes('sms:')) && requestedLevel === 'M') {
+            return 'H';
+        }
+        
+        // Rule 4: Special characters that can cause scanning issues
+        if (/[@#$%^&*(){}[\];:'"<>?]/.test(data) && data.length < 20 && requestedLevel === 'M') {
+            return 'H';
+        }
+        
+        // Rule 5: Very short alphanumeric (like "AB", "TEST") - upgrade for reliability
+        if (data.length <= 4 && /^[A-Z0-9 $%*+\-.\/\:]+$/i.test(data) && requestedLevel !== 'H') {
+            return 'H';
+        }
+        
+        return requestedLevel;
     }
 
     getTotalDataCapacity(version, errorLevel) {
@@ -1329,6 +1411,33 @@ class DIYQRCodeGenerator {
         
         return allPassed;
     }
+
+    // 📱 Convenience method for scanner-optimized QR codes
+    generateScannerOptimizedQR(data, errorLevel = 'M') {
+        const originalOptimized = this.scannerOptimized;
+        this.scannerOptimized = true;
+        
+        const result = this.generateQRCode(data, errorLevel);
+        
+        this.scannerOptimized = originalOptimized;
+        return result;
+    }
+
+    // 🎯 Factory method for creating scanner-optimized instances
+    static createScannerOptimized() {
+        return new DIYQRCodeGenerator({
+            scannerOptimized: true,
+            errorCorrectionUpgrade: true
+        });
+    }
+
+    // 🎯 Factory method for creating ISO-strict instances
+    static createISOStrict() {
+        return new DIYQRCodeGenerator({
+            scannerOptimized: false,
+            errorCorrectionUpgrade: false
+        });
+    }
 }
 
 // Auto-run test when executed
@@ -1337,4 +1446,8 @@ if (require.main === module) {
     generator.runTestAndIteration().catch(console.error);
 }
 
+// Export the class and factory methods
 module.exports = DIYQRCodeGenerator;
+module.exports.DIYQRCodeGenerator = DIYQRCodeGenerator;
+module.exports.createScannerOptimized = () => DIYQRCodeGenerator.createScannerOptimized();
+module.exports.createISOStrict = () => DIYQRCodeGenerator.createISOStrict();
