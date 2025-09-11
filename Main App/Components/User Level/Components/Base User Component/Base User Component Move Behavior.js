@@ -39,35 +39,14 @@
             return;
         }
         
-        // Calculate component position based on current mouse and original offset
-        if (element.dataset.dragOffset && element.dataset.parentOffset) {
-            const dragOffset = JSON.parse(element.dataset.dragOffset);
-            const parentOffset = JSON.parse(element.dataset.parentOffset);
-            
-            // Calculate desired component position in absolute coordinates
-            const absoluteLeft = liveMouse.x - dragOffset.x;
-            const absoluteTop = liveMouse.y - dragOffset.y;
-            
-            // Convert to relative coordinates by subtracting parent offset
-            const desiredLeft = absoluteLeft - parentOffset.x;
-            const desiredTop = absoluteTop - parentOffset.y;
-            
-            // Apply snapping to the component position
-            let finalLeft = desiredLeft;
-            let finalTop = desiredTop;
-            
-            if (typeof window.applySnapping === 'function') {
-                const snapped = window.applySnapping(desiredLeft, desiredTop, false);
-                finalLeft = snapped.x;
-                finalTop = snapped.y;
-            }
-            
-            element.style.left = finalLeft + 'px';
-            element.style.top = finalTop + 'px';
+        // Calculate component position using centralized utility
+        const position = window.OperationsUtility.calculateDragPosition(liveMouse, element);
+        if (position) {
+            window.OperationsUtility.updateElementPosition(element, position, true);
         }
         
-        element.style.transform = 'scale(1.02)';
-        element.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.3)';
+        // Apply visual feedback for move operation
+        window.OperationsUtility.applyOperationVisuals(element, 'move');
     }
 
     function cleanup(element) {
@@ -76,17 +55,9 @@
             return;
         }
         
-        element.style.transform = '';
-        element.style.boxShadow = '';
-        
-        // Clear drag offset when move completes
-        delete element.dataset.dragOffset;
-        delete element.dataset.parentOffset;
-        
-        // Preserve selection visuals after move cleanup
-        if (element.classList.contains('selected')) {
-            element.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
-        }
+        // Clear operation visuals and drag offsets using centralized utility
+        window.OperationsUtility.clearOperationVisuals(element, true);
+        window.OperationsUtility.clearDragOffsets(element);
         
         console.log('Move visuals cleaned up for:', element.id);
     }

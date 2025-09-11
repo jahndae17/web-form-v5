@@ -83,8 +83,23 @@ window.BaseUserComponentFactory = {
                 })
                 .catch(error => console.error(`Error loading ${behavior}:`, error));
         });
+    },
+    
+    // Load global utilities that all components need
+    loadGlobalUtilities: function() {
+        const basePath = '../Components/User Level/Components/Base User Component/';
+        const cacheBuster = `?v=${Date.now()}`;
+        
+        fetch(`${basePath}Base User Component Operations Utility.js${cacheBuster}`)
+            .then(response => response.text())
+            .then(script => {
+                eval(script);
+                console.log('Operations Utility loaded globally');
+            })
+            .catch(error => console.error('Error loading Operations Utility:', error));
     }
 };
 
-// Auto-register factory when this script loads
+// Load global utilities first, then register factory
+window.BaseUserComponentFactory.loadGlobalUtilities();
 console.log('Base User Component Factory loaded and ready');

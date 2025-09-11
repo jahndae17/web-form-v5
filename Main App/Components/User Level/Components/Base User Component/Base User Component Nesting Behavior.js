@@ -63,36 +63,14 @@
             return;
         }
         
-        // Calculate component position based on current mouse and original offset
-        if (element.dataset.dragOffset && element.dataset.parentOffset) {
-            const dragOffset = JSON.parse(element.dataset.dragOffset);
-            const parentOffset = JSON.parse(element.dataset.parentOffset);
-            
-            // Calculate desired component position in absolute coordinates
-            const absoluteLeft = mouse.x - dragOffset.x;
-            const absoluteTop = mouse.y - dragOffset.y;
-            
-            // Convert to relative coordinates by subtracting parent offset
-            const desiredLeft = absoluteLeft - parentOffset.x;
-            const desiredTop = absoluteTop - parentOffset.y;
-            
-            // Apply snapping to the component position
-            let finalLeft = desiredLeft;
-            let finalTop = desiredTop;
-            
-            if (typeof window.applySnapping === 'function') {
-                const snapped = window.applySnapping(desiredLeft, desiredTop, false);
-                finalLeft = snapped.x;
-                finalTop = snapped.y;
-            }
-            
-            element.style.left = finalLeft + 'px';
-            element.style.top = finalTop + 'px';
+        // Calculate component position using centralized utility
+        const position = window.OperationsUtility.calculateDragPosition(mouse, element);
+        if (position) {
+            window.OperationsUtility.updateElementPosition(element, position, true);
         }
-        element.style.transform = 'scale(1.05)';
-        element.style.boxShadow = '0 8px 16px rgba(0, 150, 255, 0.4)';
-        element.style.border = '2px dashed #0096ff';
-        element.style.opacity = '0.8';
+        
+        // Apply visual feedback for nesting operation
+        window.OperationsUtility.applyOperationVisuals(element, 'nesting');
     }
 
     // ✅ UPDATED: Parameter names and structure
@@ -235,23 +213,9 @@
             return;
         }
         
-        element.style.transform = '';
-        element.style.boxShadow = '';
-        element.style.opacity = '';
-        
-        // Clear drag offset when nesting completes
-        delete element.dataset.dragOffset;
-        delete element.dataset.parentOffset;
-        
-        // Only clear nesting-specific border (dashed), preserve selection border
-        if (element.style.border.includes('dashed')) {
-            // Restore selection border if element is selected
-            if (element.classList.contains('selected')) {
-                element.style.border = '2px solid #007ACC';
-            } else {
-                element.style.border = '';
-            }
-        }
+        // Clear operation visuals and drag offsets using centralized utility
+        window.OperationsUtility.clearOperationVisuals(element, true);
+        window.OperationsUtility.clearDragOffsets(element);
         
         console.log('Nesting visuals cleaned up for:', element.id);
     }

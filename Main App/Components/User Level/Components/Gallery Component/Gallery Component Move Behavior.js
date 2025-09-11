@@ -1,37 +1,37 @@
-// Gallery Component Reorder Behavior
+// Gallery Component Move Behavior
 // Drag and drop with indicator bar to reorder children in the gallery
-// Handles reordering functionality for gallery children during move operations
+// Extends base move behavior for gallery children to include reordering functionality
 // Tie into Gallery Component Factory & Event Handler
 
 (function() {
-    // Gallery Component Reorder Behavior.js - Handles reordering of gallery children
+    // Gallery Component Move Behavior.js - Handles reordering of gallery children
     
     const galleryChildren = document.querySelectorAll('.gallery-child');
     if (!galleryChildren.length) {
-        console.log('No gallery children found for reorder behavior, exiting script');
+        console.log('No gallery children found for move behavior, exiting script');
         return;
     }
 
     galleryChildren.forEach(child => {
         // Skip if already initialized
-        if (child.dataset.galleryReorderInitialized) return;
-        child.dataset.galleryReorderInitialized = 'true';
+        if (child.dataset.galleryMoveInitialized) return;
+        child.dataset.galleryMoveInitialized = 'true';
 
-        console.log('Gallery reorder behavior attached to:', child.id);
+        console.log('Gallery move behavior attached to:', child.id);
 
         // Live move updates during drag - add reordering logic
         child.addEventListener('liveMove', (e) => {
             const liveMouse = e.detail;
-            updateGalleryChildReorder(child, liveMouse);
+            updateGalleryChildMove(child, liveMouse);
         });
 
         // Completion handling for gallery children
         child.addEventListener('resetOperationState', () => {
-            cleanupGalleryReorderVisuals(child);
+            cleanupGalleryMoveVisuals(child);
         });
     });
 
-    function updateGalleryChildReorder(element, liveMouse) {
+    function updateGalleryChildMove(element, liveMouse) {
         // Get the gallery parent
         const gallery = element.closest('.gallery-component');
         if (!gallery) return;
@@ -44,21 +44,21 @@
     }
 
     function updateStandardMove(element, liveMouse) {
-        // The drag offset should already be set by startMoveOperation
-        // If not set, something went wrong - don't calculate it here
-        if (!element.dataset.dragOffset) {
-            console.warn('Drag offset not set for gallery reorder operation:', element.id);
-            return;
+        // Store drag offset using centralized utility
+        if (!element.dataset.dragOffset && liveMouse.isDragging) {
+            window.OperationsUtility.storeDragOffsets(element, liveMouse);
         }
         
-        // Calculate component position using centralized utility
-        const position = window.OperationsUtility.calculateDragPosition(liveMouse, element);
-        if (position) {
-            window.OperationsUtility.updateElementPosition(element, position, true);
+        // Calculate and apply position using centralized utility
+        if (element.dataset.dragOffset) {
+            const { finalLeft, finalTop } = window.OperationsUtility.calculateDragPosition(element, liveMouse);
+            
+            element.style.left = finalLeft + 'px';
+            element.style.top = finalTop + 'px';
         }
         
-        // Apply visual feedback for reorder operation
-        window.OperationsUtility.applyOperationVisuals(element, 'reorder');
+        // Apply operation visuals using centralized utility
+        window.OperationsUtility.applyOperationVisuals(element, 'move');
     }
 
     function showReorderIndicator(draggedElement, liveMouse, gallery) {
@@ -118,12 +118,7 @@
         gallery.appendChild(indicator);
     }
 
-    function cleanupGalleryReorderVisuals(element) {
-        // Standard cleanup
-        element.style.transform = '';
-        element.style.boxShadow = '';
-        element.style.zIndex = '';
-        
+    function cleanupGalleryMoveVisuals(element) {
         // Handle reordering if needed
         const insertAfter = element.dataset.insertAfter;
         if (insertAfter) {
@@ -131,19 +126,18 @@
             delete element.dataset.insertAfter;
         }
 
-        // Clear drag offset when move completes
-        delete element.dataset.dragOffset;
-        delete element.dataset.parentOffset;
+        // Clear operation visuals using centralized utility
+        window.OperationsUtility.clearOperationVisuals(element);
         
-        // Clear indicators
+        // Clear indicators using centralized utility
         window.OperationsUtility.clearGalleryReorderIndicators();
         
-        // Preserve selection visuals after reorder cleanup
+        // Preserve selection visuals after move cleanup
         if (element.classList.contains('selected')) {
             element.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
         }
         
-        console.log('Gallery reorder visuals cleaned up for:', element.id);
+        console.log('Gallery move visuals cleaned up for:', element.id);
     }
 
     function performReorder(element, insertAfterId) {

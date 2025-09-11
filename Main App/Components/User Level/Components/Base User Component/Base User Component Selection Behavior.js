@@ -103,19 +103,7 @@
         }
 
         // Calculate and store the initial drag offset when the move operation starts
-        // Use absolute position from getBoundingClientRect for proper coordinate matching
-        const rect = element.getBoundingClientRect();
-        element.dataset.dragOffset = JSON.stringify({
-            x: mouse.x - rect.left,
-            y: mouse.y - rect.top
-        });
-        
-        // ALSO store the parent offset to convert between coordinate systems
-        const parentRect = element.offsetParent ? element.offsetParent.getBoundingClientRect() : {left: 0, top: 0};
-        element.dataset.parentOffset = JSON.stringify({
-            x: parentRect.left,
-            y: parentRect.top
-        });
+        window.OperationsUtility.storeDragOffsets(element, mouse);
 
         if (window.EventsHandler) {
             window.EventsHandler.start('move', element); // ✅ Updated API call
@@ -135,19 +123,7 @@
         }
 
         // Calculate and store the initial drag offset when the nesting operation starts
-        // Use absolute position from getBoundingClientRect for proper coordinate matching
-        const rect = element.getBoundingClientRect();
-        element.dataset.dragOffset = JSON.stringify({
-            x: mouse.x - rect.left,
-            y: mouse.y - rect.top
-        });
-        
-        // ALSO store the parent offset to convert between coordinate systems
-        const parentRect = element.offsetParent ? element.offsetParent.getBoundingClientRect() : {left: 0, top: 0};
-        element.dataset.parentOffset = JSON.stringify({
-            x: parentRect.left,
-            y: parentRect.top
-        });
+        window.OperationsUtility.storeDragOffsets(element, mouse);
 
         if (window.EventsHandler) {
             window.EventsHandler.start('nesting', element); // ✅ Updated API call
@@ -155,10 +131,11 @@
     }
 
     function clearAllSelections() {
-        const allComponents = document.querySelectorAll('.base-user-component');
+        const allComponents = document.querySelectorAll('.base-user-component, .gallery-child');
         allComponents.forEach(comp => {
             comp.style.border = '';
             comp.style.backgroundColor = '';
+            comp.style.boxShadow = '';
             comp.classList.remove('selected');
         });
         
