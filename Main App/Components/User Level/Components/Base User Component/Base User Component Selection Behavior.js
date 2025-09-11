@@ -178,9 +178,8 @@
     });
 
     function handleCanvasDeselection(mouse) {
-        // Since the new Events Handler doesn't provide timing data in detail,
-        // we'll use a simpler approach
-        if (!mouse.isDragging) {
+        // Use the more specific isDraggingForDeselect property for deselection logic
+        if (!mouse.isDraggingForDeselect) {
             clearAllSelections();
         }
     }

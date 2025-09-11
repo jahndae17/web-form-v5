@@ -10,12 +10,22 @@ function createMouseState(context, state) {
         deltaY: context['now'].y - (state.lastMousePos.y || context['now'].y),
         totalDeltaX: context['now'].x - context['on last mouse down'].x,
         totalDeltaY: context['now'].y - context['on last mouse down'].y,
-        isDragging: context['on last mouse down'].time > context['on last mouse up'].time,
         element: context['now'].element,
         rightClickJustHappened: isRecentClick(context, 2) && !state.rightClickProcessed,
         leftClickJustHappened: isRecentClick(context, 1) && !state.leftClickProcessed,
     };
-    mouse.justReleased = !mouse.isDragging && (Date.now() - context['on last mouse up'].time < 20);
+    
+    // Different drag detection for different purposes
+    const isMouseDown = context['on last mouse down'].time > context['on last mouse up'].time;
+    const hasMovement = Math.abs(mouse.totalDeltaX) > 3 || Math.abs(mouse.totalDeltaY) > 3;
+    
+    // For active operations (resize/move), consider dragging as soon as mouse is down
+    mouse.isDragging = isMouseDown;
+    
+    // For deselection purposes, use stricter movement-based detection
+    mouse.isDraggingForDeselect = isMouseDown && hasMovement;
+    
+    mouse.justReleased = !isMouseDown && (Date.now() - context['on last mouse up'].time < 100);
     return mouse;
 }
 
@@ -42,7 +52,7 @@ const resizeRouting = {
 // === ROUTING TABLE ===
 const interactionRoutes = [
     {
-        condition: (el) => el.classList?.contains('resize-handle'),
+        condition: (el, context, mouse) => el.classList?.contains('resize-handle'),
         action: (mouse, el) => {
             const component = el.closest('.base-user-component');
             if (!component) return;
@@ -57,13 +67,22 @@ const interactionRoutes = [
         }
     },
     {
-        condition: (el, context) => el.classList?.contains('base-user-component') && 
-                                   context['on last mouse down'].button === 0,
+        condition: (el, context, mouse) => {
+            return el.classList?.contains('base-user-component') &&
+            context['on last mouse down'].button === 0;
+        },
         action: (mouse, el) => el.dispatchEvent(new CustomEvent('handleComponentSelect', {detail: mouse}))
     },
     {
-        condition: (el) => el.id === 'mainCanvas',
-        action: (mouse, el) => document.dispatchEvent(new CustomEvent('handleDeselect', {detail: mouse}))
+        condition: (el, context, mouse) => {
+            const isCanvas = el.id === 'mainCanvas';
+            const recentClick = isRecentClick(context, 0);
+            return isCanvas && recentClick && !state.leftClickProcessed;
+        },
+        action: (mouse, el) => {
+            document.dispatchEvent(new CustomEvent('handleDeselect', {detail: mouse}));
+            state.leftClickProcessed = true; // Mark as processed to prevent multiple triggers
+        }
     }
 ];
 
@@ -113,7 +132,7 @@ setInterval(() => {
     
     // Route new interactions using table
     if (!state.operation && mouse.element) {
-        const route = interactionRoutes.find(r => r.condition(mouse.element, context));
+        const route = interactionRoutes.find(r => r.condition(mouse.element, context, mouse));
         route?.action(mouse, mouse.element) || 
             document.dispatchEvent(new CustomEvent('handleElementLeave', {detail: mouse}));
     }
