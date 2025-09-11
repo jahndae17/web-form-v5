@@ -1,7 +1,7 @@
 (function() {
     // Base User Component Resize Behavior.js - Reactive resize handling
     
-    const components = document.querySelectorAll('.base-user-component:not(.gallery-child)');
+    const components = document.querySelectorAll('.base-user-component:not(.gallery-child):not(.gallery-component)');
     if (!components.length) {
         console.log('No components found for resize behavior, exiting script');
         return;

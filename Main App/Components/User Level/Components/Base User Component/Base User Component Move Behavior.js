@@ -1,7 +1,7 @@
 (function() {
     // Base User Component Move Behavior.js - Reactive move handling with live updates
     
-    const components = document.querySelectorAll('.base-user-component');
+    const components = document.querySelectorAll('.base-user-component:not(.gallery-child)');
     if (!components.length) {
         console.log('No components found for move behavior, exiting script');
         return;
