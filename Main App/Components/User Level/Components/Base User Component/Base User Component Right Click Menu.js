@@ -132,7 +132,7 @@
         }
         
         // Fire custom event to notify of conversion
-        const convertEvent = new CustomEvent('componentConverted', {
+        const convertEvent = new CustomEvent('componentConvertedToGallery', {
             detail: {
                 originalId: componentId,
                 newId: targetComponent.id,
@@ -237,7 +237,7 @@
     });
     
     // Also listen for component creation events
-    document.addEventListener('componentCreated', function(e) {
+    document.addEventListener('componentInstantiated', function(e) {
         setTimeout(initializeRightClickMenu, 100);
     });
     

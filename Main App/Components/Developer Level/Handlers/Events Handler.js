@@ -32,32 +32,38 @@ function createEventName(prefix, operation) {
     return `${prefix}${capitalize(operation)}`;
 }
 
-function handleResizeRouting(mouse, element) {
-    const component = element.closest('.base-user-component');
-    if (!component) return;
-    
-    const eventName = component.classList.contains('gallery-child') ? 
-        'handleGalleryResize' : 'handleResize';
-    
-    component.dispatchEvent(new CustomEvent(eventName, {
-        detail: {mouse, handle: element}
-    }));
-}
+// === RESIZE EVENT ROUTING ===
+const resizeRouting = {
+    'gallery-child': 'startGalleryResize',
+    'gallery-component': 'startResize', 
+    'base-user-component': 'startResize'
+};
 
 // === ROUTING TABLE ===
 const interactionRoutes = [
     {
         condition: (el) => el.classList?.contains('resize-handle'),
-        action: (mouse, el) => handleResizeRouting(mouse, el)
+        action: (mouse, el) => {
+            const component = el.closest('.base-user-component');
+            if (!component) return;
+            
+            const eventName = Object.entries(resizeRouting)
+                .find(([cls]) => component.classList.contains(cls))?.[1] 
+                || 'startResize';
+            
+            component.dispatchEvent(new CustomEvent(eventName, {
+                detail: {mouse, handle: el}
+            }));
+        }
     },
     {
         condition: (el, context) => el.classList?.contains('base-user-component') && 
                                    context['on last mouse down'].button === 0,
-        action: (mouse, el) => el.dispatchEvent(new CustomEvent('handleComponent', {detail: mouse}))
+        action: (mouse, el) => el.dispatchEvent(new CustomEvent('handleComponentSelect', {detail: mouse}))
     },
     {
         condition: (el) => el.id === 'mainCanvas',
-        action: (mouse, el) => document.dispatchEvent(new CustomEvent('handleCanvas', {detail: mouse}))
+        action: (mouse, el) => document.dispatchEvent(new CustomEvent('handleDeselect', {detail: mouse}))
     }
 ];
 
@@ -109,7 +115,7 @@ setInterval(() => {
     if (!state.operation && mouse.element) {
         const route = interactionRoutes.find(r => r.condition(mouse.element, context));
         route?.action(mouse, mouse.element) || 
-            document.dispatchEvent(new CustomEvent('handleMouseOff', {detail: mouse}));
+            document.dispatchEvent(new CustomEvent('handleElementLeave', {detail: mouse}));
     }
     
     state.lastMousePos = { x: mouse.x, y: mouse.y };
@@ -117,7 +123,7 @@ setInterval(() => {
 
 // === STATE MANAGEMENT ===
 function resetState() {
-    state.element?.dispatchEvent(new CustomEvent('cleanup'));
+    state.element?.dispatchEvent(new CustomEvent('resetOperationState'));
     state = { 
         operation: null, 
         element: null, 
@@ -134,5 +140,6 @@ window.EventsHandler = {
         state.operation = operation;
         state.element = element;
         state.handle = handle;
-    }
+    },
+    getState: () => ({ ...state }) // Return a copy of the state
 };

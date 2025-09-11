@@ -15,7 +15,7 @@
         let removeHandlesTimeout = null;
         
         // NEW: Handle gallery-specific resize initiation from Events Handler
-        child.addEventListener('handleGalleryResize', (e) => {
+        child.addEventListener('startGalleryResize', (e) => {
             const {mouse, handle} = e.detail;
             
             // Only allow vertical resize for gallery children
@@ -40,7 +40,7 @@
             }
         });
         
-        child.addEventListener('addResizeHandles', () => {
+        child.addEventListener('showResizeHandles', () => {
             if (removeHandlesTimeout) {
                 clearTimeout(removeHandlesTimeout);
                 removeHandlesTimeout = null;
@@ -53,7 +53,7 @@
             }
         });
         
-        child.addEventListener('removeResizeHandles', () => {
+        child.addEventListener('hideResizeHandles', () => {
             if (addHandlesTimeout) {
                 clearTimeout(addHandlesTimeout);
                 addHandlesTimeout = null;

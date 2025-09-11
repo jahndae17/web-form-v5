@@ -15,7 +15,7 @@
         console.log('Resize behavior attached to:', component.id);
 
         // ✅ NEW: Updated event listener to match simplified Events Handler
-        component.addEventListener('handleResize', (e) => {
+        component.addEventListener('startResize', (e) => {
             const {mouse, handle} = e.detail;
             handleResizeStart(component, mouse, handle);
         });
@@ -24,7 +24,7 @@
         let addHandlesTimeout = null;
         let removeHandlesTimeout = null;
 
-        component.addEventListener('addResizeHandles', () => {
+        component.addEventListener('showResizeHandles', () => {
             // Clear any pending remove operation
             if (removeHandlesTimeout) {
                 clearTimeout(removeHandlesTimeout);
@@ -40,7 +40,7 @@
             }
         });
 
-        component.addEventListener('removeResizeHandles', () => {
+        component.addEventListener('hideResizeHandles', () => {
         // Clear any pending add operation
         if (addHandlesTimeout) {
             clearTimeout(addHandlesTimeout);
@@ -69,7 +69,7 @@
         });
 
         // Clean up old event listeners that are no longer used
-        component.addEventListener('cleanup', () => {
+        component.addEventListener('resetOperationState', () => {
             removeResizeHandles(component);
             delete component.dataset.resizeStartPosition;
         });

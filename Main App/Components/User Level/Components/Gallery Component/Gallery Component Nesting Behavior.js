@@ -12,7 +12,7 @@
         console.log('Gallery nesting behavior attached to:', gallery.id);
 
         // Listen for components being nested into this gallery
-        gallery.addEventListener('childComponentAdded', (e) => {
+        gallery.addEventListener('galleryChildAdded', (e) => {
             const child = e.detail.child;
             convertToGalleryChild(gallery, child);
         });

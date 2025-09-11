@@ -172,7 +172,7 @@ window.GalleryComponentFactory = {
     // Setup child management for the gallery
     setupChildManagement: function(gallery) {
         // Listen for child additions
-        gallery.addEventListener('childComponentAdded', (e) => {
+        gallery.addEventListener('galleryChildAdded', (e) => {
             this.updateGalleryHeight(gallery);
             this.updateChildWidths(gallery);
         });

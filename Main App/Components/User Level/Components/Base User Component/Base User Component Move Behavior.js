@@ -21,7 +21,7 @@
         });
 
         // Visual cleanup
-        component.addEventListener('cleanup', () => {
+        component.addEventListener('resetOperationState', () => {
             cleanup(component);
         });
     });

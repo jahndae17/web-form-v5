@@ -26,14 +26,14 @@
             handleNestingCompletion(component, mouse);
         });
 
-        // ✅ UPDATED: Visual cleanup - Now called via 'cleanup' event
-        component.addEventListener('cleanup', () => {
+        // ✅ UPDATED: Visual cleanup - Now called via 'resetOperationState' event
+        component.addEventListener('resetOperationState', () => {
             cleanupNestingVisuals(component);
         });
     });
 
     // Global event listener for clearing highlights (this can stay the same)
-    document.addEventListener('clearNestingHighlights', () => {
+    document.addEventListener('hideNestingHighlights', () => {
         clearNestingHighlights();
     });
 
@@ -180,7 +180,7 @@
         nestableComponent.style.top = relativeY + 'px';
         
         // Dispatch nesting events
-        nestableComponent.dispatchEvent(new CustomEvent('componentNested', {
+        nestableComponent.dispatchEvent(new CustomEvent('componentNestedComplete', {
             detail: { 
                 newParent: targetContainer,
                 relativeX: relativeX,
@@ -188,7 +188,7 @@
             }
         }));
         
-        targetContainer.dispatchEvent(new CustomEvent('childComponentAdded', {
+        targetContainer.dispatchEvent(new CustomEvent('galleryChildAdded', {
             detail: { 
                 child: nestableComponent,
                 relativeX: relativeX,

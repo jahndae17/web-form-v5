@@ -26,7 +26,7 @@
         });
 
         // Completion handling for gallery children
-        child.addEventListener('cleanup', () => {
+        child.addEventListener('resetOperationState', () => {
             cleanupGalleryMoveVisuals(child);
         });
     });

@@ -15,7 +15,7 @@
         console.log('Selection behavior attached to:', component.id);
 
         // NEW: Updated event listener to match simplified Events Handler
-        component.addEventListener('handleComponent', (e) => {
+        component.addEventListener('handleComponentSelect', (e) => {
             const mouse = e.detail; // Simplified - mouse object directly
             handleComponentSelection(component, mouse);
         });
@@ -56,12 +56,12 @@
         if (!inputs['selectedElementList']?.[element.id]) return;
 
         // Handle drag operations for selected components
-        if (mouse.isDragging && !state.operation && !state.isNesting) {
+        if (mouse.isDragging && !state.operation) {
             // Edge detection helper for resize handles
             const edges = getEdgeInfo(element, mouse);
 
             // Handle resize handles
-            element.dispatchEvent(new CustomEvent(edges.isNearEdge ? 'addResizeHandles' : 'removeResizeHandles'));
+            element.dispatchEvent(new CustomEvent(edges.isNearEdge ? 'showResizeHandles' : 'hideResizeHandles'));
             
             // Start appropriate operation
             if (edges.isNearEdge) {
@@ -168,12 +168,12 @@
     window.clearAllSelections = clearAllSelections;
 
     // Add global canvas click handler for deselection
-    document.addEventListener('handleCanvasInteraction', (e) => {
+    document.addEventListener('handleDeselect', (e) => {
         handleCanvasDeselection(e.detail);
     });
 
     // Add global mouse off handler for removing resize handles  
-    document.addEventListener('handleMouseOff', (e) => {
+    document.addEventListener('handleElementLeave', (e) => {
         handleMouseOff(e.detail);
     });
 
@@ -195,7 +195,7 @@
                 for (const key in inputs['selectedElementList']) {
                     const selectedElement = inputs['selectedElementList'][key];
                     if (selectedElement?.classList?.contains('base-user-component')) {
-                        selectedElement.dispatchEvent(new CustomEvent('removeResizeHandles'));
+                        selectedElement.dispatchEvent(new CustomEvent('hideResizeHandles'));
                     }
                 }
             }
