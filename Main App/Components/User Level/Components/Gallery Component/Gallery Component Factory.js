@@ -162,6 +162,12 @@ window.GalleryComponentFactory = {
                         `const component = document.getElementById('${childId}');`
                     );
                     
+                    // Handle gallery-specific selectors too
+                    modifiedScript = modifiedScript.replace(
+                        /const galleryChildren = document\.querySelectorAll\('\.base-user-component'\);/g,
+                        `const galleryChildren = [document.getElementById('${childId}')];`
+                    );
+                    
                     eval(modifiedScript);
                     console.log(`${behavior} loaded for child:`, childId);
                 })

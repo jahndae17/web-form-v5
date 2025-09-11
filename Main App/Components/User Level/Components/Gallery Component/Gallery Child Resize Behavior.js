@@ -2,26 +2,33 @@
 // Custom resize behavior for gallery children (ResizableY only)
 
 (function() {
-    const galleryChildren = document.querySelectorAll('.gallery-child:not([data-resize-behavior-initialized])');
+    const galleryChildren = document.querySelectorAll('.base-user-component');
     if (!galleryChildren.length) return;
 
     galleryChildren.forEach(child => {
-        if (child.dataset.resizeBehaviorInitialized) return;
-        child.dataset.resizeBehaviorInitialized = 'true';
+        // Only process gallery children
+        if (!child.classList.contains('gallery-child')) return;
+        if (child.dataset.galleryChildResizeBehaviorInitialized) return;
+        child.dataset.galleryChildResizeBehaviorInitialized = 'true';
         
         console.log('Gallery child resize behavior attached to:', child.id);
         
         let addHandlesTimeout = null;
         let removeHandlesTimeout = null;
         
-        // NEW: Handle gallery-specific resize initiation from Events Handler
+        // Handle gallery-specific resize initiation from Events Handler
         child.addEventListener('startGalleryResize', (e) => {
-            const {mouse, handle} = e.detail;
+            const {mouse, edges} = e.detail;
+            
+            // Determine which handle should be active based on edges
+            let activeHandle = null;
+            if (edges.nearTop) activeHandle = 'n';
+            else if (edges.nearBottom) activeHandle = 's';
             
             // Only allow vertical resize for gallery children
-            if (handle.dataset.handle === 'n' || handle.dataset.handle === 's') {
-                console.log('Starting gallery child resize operation:', child.id, handle.dataset.handle);
-                window.EventsHandler.start('resize', child, handle.dataset.handle);
+            if (activeHandle) {
+                console.log('Starting gallery child resize operation:', child.id, activeHandle);
+                window.EventsHandler.start('resize', child, activeHandle);
             }
         });
         
@@ -87,6 +94,15 @@
         // Apply minimum height constraint
         newHeight = Math.max(newHeight, 20);
         child.style.height = newHeight + 'px';
+        
+        // LIVE UPDATE: Maintain 8px gaps and update gallery height during resize
+        const gallery = child.closest('.gallery-component');
+        if (gallery && window.GalleryComponentFactory) {
+            // Update child widths to maintain proper spacing and gaps
+            window.GalleryComponentFactory.updateChildWidths(gallery);
+            // Update gallery height to accommodate the resized child
+            window.GalleryComponentFactory.updateGalleryHeight(gallery);
+        }
         
         console.log(`Gallery child resized to height: ${newHeight}px`);
     }

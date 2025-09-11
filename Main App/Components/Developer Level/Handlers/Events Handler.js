@@ -91,9 +91,18 @@ const operationRoutes = [
             const nearTop = mouse.y < rect.top + threshold;
             const nearBottom = mouse.y > rect.bottom - threshold;
 
-            el.dispatchEvent(new CustomEvent('startResizeOperation', {
-                detail: {mouse, edges: {nearLeft, nearRight, nearTop, nearBottom}}
-            }));
+            // Send different events based on component type
+            if (el.classList.contains('gallery-child')) {
+                // Gallery children need special handling for vertical positioning
+                el.dispatchEvent(new CustomEvent('startGalleryResize', {
+                    detail: {mouse, edges: {nearLeft, nearRight, nearTop, nearBottom}}
+                }));
+            } else {
+                // Regular components use the standard event
+                el.dispatchEvent(new CustomEvent('startResizeOperation', {
+                    detail: {mouse, edges: {nearLeft, nearRight, nearTop, nearBottom}}
+                }));
+            }
         }
     },
     {

@@ -8,14 +8,20 @@
     }
 
     components.forEach(component => {
-        // Skip if already initialized
-        if (component.dataset.resizeBehaviorInitialized) return;
+        // Skip if already initialized OR if it's a gallery child
+        if (component.dataset.resizeBehaviorInitialized || component.classList.contains('gallery-child')) return;
         component.dataset.resizeBehaviorInitialized = 'true';
 
         console.log('Resize behavior attached to:', component.id);
 
         // Handle resize initiation from Events Handler
         component.addEventListener('startResizeOperation', (e) => {
+            // Double-check that this isn't a gallery child (in case class was added after initialization)
+            if (component.classList.contains('gallery-child')) {
+                console.log('Ignoring resize for gallery child:', component.id);
+                return;
+            }
+            
             const {mouse, edges} = e.detail;
             
             // Determine which handle should be active based on edges
