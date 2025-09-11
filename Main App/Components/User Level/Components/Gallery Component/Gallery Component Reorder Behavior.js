@@ -78,10 +78,13 @@
             const child = allChildren[i];
             const rect = child.getBoundingClientRect();
             const centerY = rect.top + rect.height / 2;
+            
+            console.log(`Child ${i} (${child.id}): rect.top=${rect.top}, centerY=${centerY}, mouse.y=${liveMouse.y}`);
 
             if (liveMouse.y < centerY) {
                 insertionPoint = rect.top;
                 insertAfter = i > 0 ? allChildren[i - 1] : null;
+                console.log(`Insertion point found at rect.top=${rect.top} (absolute coordinates)`);
                 break;
             }
         }
@@ -92,6 +95,7 @@
             const rect = lastChild.getBoundingClientRect();
             insertionPoint = rect.bottom + 4; // 4px gap indicator
             insertAfter = lastChild;
+            console.log(`Insertion point at end: rect.bottom=${rect.bottom} + 4 = ${insertionPoint} (absolute coordinates)`);
         }
 
         // Show reorder indicator
@@ -102,13 +106,21 @@
     }
 
     function showInsertionIndicator(yPosition, gallery) {
+        const galleryRect = gallery.getBoundingClientRect();
+        console.log(`Gallery rect: top=${galleryRect.top}, left=${galleryRect.left}`);
+        console.log(`Received yPosition=${yPosition} (absolute), converting to relative...`);
+        
+        // Convert absolute Y position to relative position within gallery
+        const relativeY = yPosition - galleryRect.top;
+        console.log(`Converted to relative Y=${relativeY} within gallery`);
+        
         const indicator = document.createElement('div');
         indicator.className = 'gallery-reorder-indicator';
         indicator.style.cssText = `
             position: absolute;
             left: 10px;
             right: 10px;
-            top: ${yPosition}px;
+            top: ${relativeY}px;
             height: 2px;
             background: #007acc;
             z-index: 999;
