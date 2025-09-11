@@ -22,6 +22,7 @@
         // Live move updates during drag - add reordering logic
         child.addEventListener('liveMove', (e) => {
             const liveMouse = e.detail;
+            console.log('liveMove received for gallery child:', child.id);
             updateGalleryChildReorder(child, liveMouse);
         });
 

@@ -89,6 +89,21 @@ const operationRoutes = [
         }
     },
     {
+        // Gallery children move/reorder operations
+        condition: (el, context, mouse) => {
+            const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+            return el.classList?.contains('gallery-child') &&
+                   context['on last mouse down'].button === 0 &&
+                   mouse.isDragging && 
+                   !state.operation &&
+                   inputs?.['selectedElementList']?.[el.id];
+        },
+        action: (mouse, el) => {
+            console.log('Gallery child move operation triggered for:', el.id);
+            el.dispatchEvent(new CustomEvent('startMoveOperation', {detail: mouse}));
+        }
+    },
+    {
         condition: (el, context, mouse) => {
             const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
             return el.classList?.contains('base-user-component') &&
@@ -112,6 +127,7 @@ const operationRoutes = [
                    inputs?.['selectedElementList']?.[el.id];
         },
         action: (mouse, el) => {
+            console.log('General move operation triggered for:', el.id, 'classes:', el.className);
             el.dispatchEvent(new CustomEvent('startMoveOperation', {detail: mouse}));
         }
     }

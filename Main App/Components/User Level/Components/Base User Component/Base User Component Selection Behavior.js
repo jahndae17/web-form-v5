@@ -28,6 +28,7 @@
 
         component.addEventListener('startMoveOperation', (e) => {
             const mouse = e.detail;
+            console.log('startMoveOperation received for:', component.id, 'classes:', component.className);
             startMove(component, mouse);
         });
 
@@ -104,6 +105,7 @@
 
         // Calculate and store the initial drag offset when the move operation starts
         window.OperationsUtility.storeDragOffsets(element, mouse);
+        console.log('Drag offsets stored for:', element.id, 'dragOffset:', element.dataset.dragOffset, 'parentOffset:', element.dataset.parentOffset);
 
         if (window.EventsHandler) {
             window.EventsHandler.start('move', element); // ✅ Updated API call
