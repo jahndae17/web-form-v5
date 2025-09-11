@@ -39,6 +39,11 @@
 
     // ✅ UPDATED: Parameter name changed from liveMouse to mouse
     function updateLiveNesting(element, mouse) {
+        // Skip gallery children - they have their own nesting behavior
+        if (element.classList.contains('gallery-child')) {
+            return;
+        }
+        
         // Clear previous highlights
         clearNestingHighlights();
         
@@ -51,23 +56,25 @@
             potentialTarget.dataset.nestingTarget = 'true';
         }
         
-        // Update dragged element position using direct mouse-to-component calculation
-        // Get the offset from mouse to component ONLY on first frame of drag
-        if (!element.dataset.dragOffset && mouse.isDragging) {
-            const rect = element.getBoundingClientRect();
-            element.dataset.dragOffset = JSON.stringify({
-                x: mouse.x - rect.left,
-                y: mouse.y - rect.top
-            });
+        // Update dragged element position - drag offset should already be set by startNestingOperation
+        // If not set, something went wrong - don't calculate it here
+        if (!element.dataset.dragOffset) {
+            console.warn('Drag offset not set for nesting operation:', element.id);
+            return;
         }
         
         // Calculate component position based on current mouse and original offset
-        if (element.dataset.dragOffset) {
+        if (element.dataset.dragOffset && element.dataset.parentOffset) {
             const dragOffset = JSON.parse(element.dataset.dragOffset);
+            const parentOffset = JSON.parse(element.dataset.parentOffset);
             
-            // Calculate desired component position: nowMouseX - dragOffsetX
-            const desiredLeft = mouse.x - dragOffset.x;
-            const desiredTop = mouse.y - dragOffset.y;
+            // Calculate desired component position in absolute coordinates
+            const absoluteLeft = mouse.x - dragOffset.x;
+            const absoluteTop = mouse.y - dragOffset.y;
+            
+            // Convert to relative coordinates by subtracting parent offset
+            const desiredLeft = absoluteLeft - parentOffset.x;
+            const desiredTop = absoluteTop - parentOffset.y;
             
             // Apply snapping to the component position
             let finalLeft = desiredLeft;
@@ -90,6 +97,11 @@
 
     // ✅ UPDATED: Parameter names and structure
     function handleNestingCompletion(element, mouse) {
+        // Skip gallery children - they have their own nesting completion behavior
+        if (element.classList.contains('gallery-child')) {
+            return;
+        }
+        
         // Get inputs from handler data since it's not passed in event anymore
         const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
         
@@ -218,12 +230,18 @@
     }
 
     function cleanupNestingVisuals(element) {
+        // Skip gallery children - they have their own cleanup behavior
+        if (element.classList.contains('gallery-child')) {
+            return;
+        }
+        
         element.style.transform = '';
         element.style.boxShadow = '';
         element.style.opacity = '';
         
         // Clear drag offset when nesting completes
         delete element.dataset.dragOffset;
+        delete element.dataset.parentOffset;
         
         // Only clear nesting-specific border (dashed), preserve selection border
         if (element.style.border.includes('dashed')) {

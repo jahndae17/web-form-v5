@@ -27,23 +27,30 @@
     });
 
     function updateLiveMove(element, liveMouse) {
-        // Get the offset from mouse to component ONLY on first frame of drag
-        if (!element.dataset.dragOffset && liveMouse.isDragging) {
-            const rect = element.getBoundingClientRect();
-            element.dataset.dragOffset = JSON.stringify({
-                x: liveMouse.x - rect.left,
-                y: liveMouse.y - rect.top
-            });
-            console.log('Drag offset set for:', element.id);
+        // Skip gallery children - they have their own move behavior
+        if (element.classList.contains('gallery-child')) {
+            return;
+        }
+        
+        // The drag offset should already be set by startMoveOperation
+        // If not set, something went wrong - don't calculate it here
+        if (!element.dataset.dragOffset) {
+            console.warn('Drag offset not set for move operation:', element.id);
+            return;
         }
         
         // Calculate component position based on current mouse and original offset
-        if (element.dataset.dragOffset) {
+        if (element.dataset.dragOffset && element.dataset.parentOffset) {
             const dragOffset = JSON.parse(element.dataset.dragOffset);
+            const parentOffset = JSON.parse(element.dataset.parentOffset);
             
-            // Calculate desired component position: nowMouseX - dragOffsetX
-            const desiredLeft = liveMouse.x - dragOffset.x;
-            const desiredTop = liveMouse.y - dragOffset.y;
+            // Calculate desired component position in absolute coordinates
+            const absoluteLeft = liveMouse.x - dragOffset.x;
+            const absoluteTop = liveMouse.y - dragOffset.y;
+            
+            // Convert to relative coordinates by subtracting parent offset
+            const desiredLeft = absoluteLeft - parentOffset.x;
+            const desiredTop = absoluteTop - parentOffset.y;
             
             // Apply snapping to the component position
             let finalLeft = desiredLeft;
@@ -64,11 +71,17 @@
     }
 
     function cleanup(element) {
+        // Skip gallery children - they have their own cleanup behavior
+        if (element.classList.contains('gallery-child')) {
+            return;
+        }
+        
         element.style.transform = '';
         element.style.boxShadow = '';
         
         // Clear drag offset when move completes
         delete element.dataset.dragOffset;
+        delete element.dataset.parentOffset;
         
         // Preserve selection visuals after move cleanup
         if (element.classList.contains('selected')) {

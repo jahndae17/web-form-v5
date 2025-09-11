@@ -188,14 +188,20 @@
                 let newLeft = startPosition.left + deltaX;
                 let newTop = startPosition.top + deltaY;
                 
-                // Apply snapping to dimensions and position
+                // Apply coordinated snapping for corner handles
                 if (typeof window.applySnapping === 'function') {
-                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
+                    // For corner handles, calculate the bottom-right corner first
+                    const rightEdge = startPosition.left + startPosition.width;
+                    const bottomEdge = startPosition.top + startPosition.height;
+                    
+                    // Snap the new top-left position
                     const snappedPos = window.applySnapping(newLeft, newTop, false);
-                    newWidth = snappedSize.x;
-                    newHeight = snappedSize.y;
                     newLeft = snappedPos.x;
                     newTop = snappedPos.y;
+                    
+                    // Calculate dimensions from snapped position to maintain bottom-right
+                    newWidth = rightEdge - newLeft;
+                    newHeight = bottomEdge - newTop;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -208,13 +214,19 @@
                 let newHeight = startPosition.height - deltaY;
                 let newTop = startPosition.top + deltaY;
                 
-                // Apply snapping to dimensions and position
+                // Apply coordinated snapping for corner handles
                 if (typeof window.applySnapping === 'function') {
-                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
-                    const snappedPos = window.applySnapping(startPosition.left, newTop, false);
-                    newWidth = snappedSize.x;
-                    newHeight = snappedSize.y;
-                    newTop = snappedPos.y;
+                    // Calculate the right edge and snap top position
+                    const rightEdge = startPosition.left + newWidth;
+                    const bottomEdge = startPosition.top + startPosition.height;
+                    
+                    // Snap the right edge and top position
+                    const snappedRight = window.applySnapping(rightEdge, 0, false);
+                    const snappedTop = window.applySnapping(0, newTop, false);
+                    
+                    newWidth = snappedRight.x - startPosition.left;
+                    newTop = snappedTop.y;
+                    newHeight = bottomEdge - newTop;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -226,13 +238,19 @@
                 let newHeight = startPosition.height + deltaY;
                 let newLeft = startPosition.left + deltaX;
                 
-                // Apply snapping to dimensions and position
+                // Apply coordinated snapping for corner handles
                 if (typeof window.applySnapping === 'function') {
-                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
-                    const snappedPos = window.applySnapping(newLeft, startPosition.top, false);
-                    newWidth = snappedSize.x;
-                    newHeight = snappedSize.y;
-                    newLeft = snappedPos.x;
+                    // Calculate the right edge and bottom edge
+                    const rightEdge = startPosition.left + startPosition.width;
+                    const bottomEdge = startPosition.top + newHeight;
+                    
+                    // Snap the left position and bottom edge
+                    const snappedLeft = window.applySnapping(newLeft, 0, false);
+                    const snappedBottom = window.applySnapping(0, bottomEdge, false);
+                    
+                    newLeft = snappedLeft.x;
+                    newWidth = rightEdge - newLeft;
+                    newHeight = snappedBottom.y - startPosition.top;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -243,11 +261,13 @@
                 let newWidth = startPosition.width + deltaX;
                 let newHeight = startPosition.height + deltaY;
                 
-                // Apply snapping to dimensions
+                // Apply snapping to the bottom-right corner
                 if (typeof window.applySnapping === 'function') {
-                    const snapped = window.applySnapping(newWidth, newHeight, false);
-                    newWidth = snapped.x;
-                    newHeight = snapped.y;
+                    const rightEdge = startPosition.left + newWidth;
+                    const bottomEdge = startPosition.top + newHeight;
+                    const snapped = window.applySnapping(rightEdge, bottomEdge, false);
+                    newWidth = snapped.x - startPosition.left;
+                    newHeight = snapped.y - startPosition.top;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -257,12 +277,12 @@
                 let newHeight = startPosition.height - deltaY;
                 let newTop = startPosition.top + deltaY;
                 
-                // Apply snapping to dimension and position
+                // Apply coordinated snapping for edge handles
                 if (typeof window.applySnapping === 'function') {
-                    const snappedSize = window.applySnapping(startPosition.width, newHeight, false);
-                    const snappedPos = window.applySnapping(startPosition.left, newTop, false);
-                    newHeight = snappedSize.y;
-                    newTop = snappedPos.y;
+                    const bottomEdge = startPosition.top + startPosition.height;
+                    const snappedTop = window.applySnapping(0, newTop, false);
+                    newTop = snappedTop.y;
+                    newHeight = bottomEdge - newTop;
                 }
                 
                 element.style.height = `${newHeight}px`;
@@ -271,10 +291,11 @@
             's': () => {
                 let newHeight = startPosition.height + deltaY;
                 
-                // Apply snapping to dimension
+                // Apply snapping to bottom edge
                 if (typeof window.applySnapping === 'function') {
-                    const snapped = window.applySnapping(startPosition.width, newHeight, false);
-                    newHeight = snapped.y;
+                    const bottomEdge = startPosition.top + newHeight;
+                    const snapped = window.applySnapping(0, bottomEdge, false);
+                    newHeight = snapped.y - startPosition.top;
                 }
                 
                 element.style.height = `${newHeight}px`;
@@ -282,10 +303,11 @@
             'e': () => {
                 let newWidth = startPosition.width + deltaX;
                 
-                // Apply snapping to dimension
+                // Apply snapping to right edge
                 if (typeof window.applySnapping === 'function') {
-                    const snapped = window.applySnapping(newWidth, startPosition.height, false);
-                    newWidth = snapped.x;
+                    const rightEdge = startPosition.left + newWidth;
+                    const snapped = window.applySnapping(rightEdge, 0, false);
+                    newWidth = snapped.x - startPosition.left;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -294,12 +316,12 @@
                 let newWidth = startPosition.width - deltaX;
                 let newLeft = startPosition.left + deltaX;
                 
-                // Apply snapping to dimension and position
+                // Apply coordinated snapping for edge handles
                 if (typeof window.applySnapping === 'function') {
-                    const snappedSize = window.applySnapping(newWidth, startPosition.height, false);
-                    const snappedPos = window.applySnapping(newLeft, startPosition.top, false);
-                    newWidth = snappedSize.x;
-                    newLeft = snappedPos.x;
+                    const rightEdge = startPosition.left + startPosition.width;
+                    const snappedLeft = window.applySnapping(newLeft, 0, false);
+                    newLeft = snappedLeft.x;
+                    newWidth = rightEdge - newLeft;
                 }
                 
                 element.style.width = `${newWidth}px`;

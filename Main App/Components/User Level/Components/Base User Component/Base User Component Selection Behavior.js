@@ -19,6 +19,22 @@
             const mouse = e.detail; // Simplified - mouse object directly
             handleComponentSelection(component, mouse);
         });
+
+        // NEW: Event listeners for operation start events from Events Handler
+        component.addEventListener('startResizeOperation', (e) => {
+            const {mouse, edges} = e.detail;
+            startResize(component, edges);
+        });
+
+        component.addEventListener('startMoveOperation', (e) => {
+            const mouse = e.detail;
+            startMove(component, mouse);
+        });
+
+        component.addEventListener('startNestingOperation', (e) => {
+            const mouse = e.detail;
+            startNesting(component, mouse);
+        });
     });
 
     function handleComponentSelection(element, mouse) {
@@ -26,10 +42,7 @@
         const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
         if (!inputs) return;
 
-        // Get current state from Events Handler
-        const state = window.EventsHandler?.getState?.() || {};
-
-        // Only allow selection on actual mouse down, not hover
+        // Only allow selection on actual mouse down, not hover or drag
         if (!inputs['selectedElementList']?.[element.id] && 
             !mouse.isDragging &&  // ✅ Must not be dragging (simplified from mouseJustPressed)
             Math.abs(mouse.totalDeltaX) + Math.abs(mouse.totalDeltaY) < 16) {
@@ -49,45 +62,7 @@
             element.classList.add('selected');
             
             console.log('Component selected:', element.id);
-            return;
         }
-
-        // Only allow operations on selected elements during drag
-        if (!inputs['selectedElementList']?.[element.id]) return;
-
-        // Handle drag operations for selected components
-        if (mouse.isDragging && !state.operation) {
-            // Edge detection helper for resize handles
-            const edges = getEdgeInfo(element, mouse);
-
-            // Handle resize handles
-            element.dispatchEvent(new CustomEvent(edges.isNearEdge ? 'showResizeHandles' : 'hideResizeHandles'));
-            
-            // Start appropriate operation
-            if (edges.isNearEdge) {
-                startResize(element, edges);
-            } else if (element.classList.contains('isNestable') && !state.operation) {
-                startNesting(element);
-            } else if (!state.operation) {
-                startMove(element);
-            }
-        }
-    }
-
-    // Helper function for edge detection
-    function getEdgeInfo(element, mouse) {
-        const rect = element.getBoundingClientRect();
-        const threshold = 10;
-        
-        const nearLeft = mouse.x < rect.left + threshold;
-        const nearRight = mouse.x > rect.right - threshold;
-        const nearTop = mouse.y < rect.top + threshold;
-        const nearBottom = mouse.y > rect.bottom - threshold;
-        
-        return {
-            nearLeft, nearRight, nearTop, nearBottom,
-            isNearEdge: nearLeft || nearRight || nearTop || nearBottom
-        };
     }
 
     // Start operation functions
@@ -120,19 +95,34 @@
         }
     }
 
-    function startMove(element) {
+    function startMove(element, mouse) {
         const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
         if (!inputs?.['selectedElementList']?.[element.id]) {
             console.log('Move blocked: Element not selected');
             return;
         }
 
+        // Calculate and store the initial drag offset when the move operation starts
+        // Use absolute position from getBoundingClientRect for proper coordinate matching
+        const rect = element.getBoundingClientRect();
+        element.dataset.dragOffset = JSON.stringify({
+            x: mouse.x - rect.left,
+            y: mouse.y - rect.top
+        });
+        
+        // ALSO store the parent offset to convert between coordinate systems
+        const parentRect = element.offsetParent ? element.offsetParent.getBoundingClientRect() : {left: 0, top: 0};
+        element.dataset.parentOffset = JSON.stringify({
+            x: parentRect.left,
+            y: parentRect.top
+        });
+
         if (window.EventsHandler) {
             window.EventsHandler.start('move', element); // ✅ Updated API call
         }
     }
 
-    function startNesting(element) {
+    function startNesting(element, mouse) {
         const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
         if (!inputs?.['selectedElementList']?.[element.id]) {
             console.log('Nesting blocked: Element not selected');
@@ -143,6 +133,21 @@
             console.log('Nesting blocked: Element not nestable');
             return;
         }
+
+        // Calculate and store the initial drag offset when the nesting operation starts
+        // Use absolute position from getBoundingClientRect for proper coordinate matching
+        const rect = element.getBoundingClientRect();
+        element.dataset.dragOffset = JSON.stringify({
+            x: mouse.x - rect.left,
+            y: mouse.y - rect.top
+        });
+        
+        // ALSO store the parent offset to convert between coordinate systems
+        const parentRect = element.offsetParent ? element.offsetParent.getBoundingClientRect() : {left: 0, top: 0};
+        element.dataset.parentOffset = JSON.stringify({
+            x: parentRect.left,
+            y: parentRect.top
+        });
 
         if (window.EventsHandler) {
             window.EventsHandler.start('nesting', element); // ✅ Updated API call

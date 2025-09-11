@@ -130,7 +130,7 @@ window.GalleryComponentFactory = {
         const behaviors = [
             'Base User Component Snapping Modifier.js',
             'Base User Component Selection Behavior.js',
-            'Gallery Component Move Behavior.js',
+            'Gallery Component Reorder Behavior.js',
             'Base User Component Nesting Behavior.js',
             'Gallery Child Resize Behavior.js'
         ];
