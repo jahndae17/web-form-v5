@@ -27,6 +27,8 @@ function createMouseState(context, state) {
 
     // For resize purposes, use laxer conditions
     mouse.isDraggingForResize = isMouseDown;
+    
+    // Debug mouse state when dragging
 
     mouse.justReleased = !isMouseDown && (Date.now() - context['on last mouse up'].time < 100);
     return mouse;
@@ -55,23 +57,29 @@ const resizeRouting = {
 // === OPERATION ROUTING TABLE ===
 const operationRoutes = [
     {
+        // RESIZE operations - HIGHEST PRIORITY (check edge proximity first)
         condition: (el, context, mouse) => {
             const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            const rect = el.getBoundingClientRect();
-            const threshold = 10;
             
-            const nearLeft = mouse.x < rect.left + threshold;
-            const nearRight = mouse.x > rect.right - threshold;
-            const nearTop = mouse.y < rect.top + threshold;
-            const nearBottom = mouse.y > rect.bottom - threshold;
-            const isNearEdge = nearLeft || nearRight || nearTop || nearBottom;
+            // Must be a base-user-component (includes gallery-child)
+            const isComponent = el.classList?.contains('base-user-component');
+            if (!isComponent) return false;
             
-            return el.classList?.contains('base-user-component') &&
+            // Check edge proximity first
+            const isNearEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
+            
+            const shouldResize = isComponent &&
                    context['on last mouse down'].button === 0 &&
                    mouse.isDraggingForResize && 
                    !state.operation &&
                    inputs?.['selectedElementList']?.[el.id] &&
-                   isNearEdge; // Only trigger resize if actually near edge
+                   isNearEdge;
+                   
+            if (shouldResize) {
+                console.log('RESIZE route triggered for:', el.id, 'isNearEdge:', isNearEdge, 'isDraggingForResize:', mouse.isDraggingForResize);
+            }
+            
+            return shouldResize;
         },
         action: (mouse, el) => {
             // Edge detection helper for resize handles
@@ -89,14 +97,32 @@ const operationRoutes = [
         }
     },
     {
-        // Gallery children move/reorder operations
+        // Gallery children move/reorder operations - LOWER PRIORITY
         condition: (el, context, mouse) => {
             const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            return el.classList?.contains('gallery-child') &&
+            
+            // Only proceed if NOT near edge of child OR parent gallery (resize takes precedence)
+            const isNearChildEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
+            if (isNearChildEdge) return false; // Child resize takes precedence
+            
+            // Check if near parent gallery edge
+            const parentGallery = el.closest('.gallery-component');
+            if (parentGallery) {
+                const isNearParentEdge = OperationsUtility.isNearComponentEdge(parentGallery, mouse.x, mouse.y);
+                if (isNearParentEdge) return false; // Parent gallery resize takes precedence
+            }
+            
+            const shouldMove = el.classList?.contains('gallery-child') &&
                    context['on last mouse down'].button === 0 &&
                    mouse.isDragging && 
                    !state.operation &&
                    inputs?.['selectedElementList']?.[el.id];
+                   
+            if (shouldMove) {
+                console.log('GALLERY CHILD MOVE route triggered for:', el.id, 'isDragging:', mouse.isDragging);
+            }
+            
+            return shouldMove;
         },
         action: (mouse, el) => {
             console.log('Gallery child move operation triggered for:', el.id);
@@ -104,8 +130,21 @@ const operationRoutes = [
         }
     },
     {
+        // NESTING operations - LOWER PRIORITY
         condition: (el, context, mouse) => {
             const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
+            
+            // Only proceed if NOT near edge of element OR parent gallery (resize takes precedence)
+            const isNearElementEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
+            if (isNearElementEdge) return false; // Element resize takes precedence
+            
+            // Check if near parent gallery edge (if element is a gallery child)
+            const parentGallery = el.closest('.gallery-component');
+            if (parentGallery) {
+                const isNearParentEdge = OperationsUtility.isNearComponentEdge(parentGallery, mouse.x, mouse.y);
+                if (isNearParentEdge) return false; // Parent gallery resize takes precedence
+            }
+            
             return el.classList?.contains('base-user-component') &&
                    context['on last mouse down'].button === 0 &&
                    mouse.isDragging && 
@@ -118,13 +157,32 @@ const operationRoutes = [
         }
     },
     {
+        // GENERAL MOVE operations - LOWEST PRIORITY
         condition: (el, context, mouse) => {
             const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            return el.classList?.contains('base-user-component') &&
+            
+            // Only proceed if NOT near edge of element OR parent gallery (resize takes precedence)
+            const isNearElementEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
+            if (isNearElementEdge) return false; // Element resize takes precedence
+            
+            // Check if near parent gallery edge (if element is a gallery child)
+            const parentGallery = el.closest('.gallery-component');
+            if (parentGallery) {
+                const isNearParentEdge = OperationsUtility.isNearComponentEdge(parentGallery, mouse.x, mouse.y);
+                if (isNearParentEdge) return false; // Parent gallery resize takes precedence
+            }
+            
+            const shouldMove = el.classList?.contains('base-user-component') &&
                    context['on last mouse down'].button === 0 &&
                    mouse.isDragging && 
                    !state.operation &&
                    inputs?.['selectedElementList']?.[el.id];
+                   
+            if (shouldMove) {
+                console.log('GENERAL MOVE route triggered for:', el.id, 'isDragging:', mouse.isDragging, 'classes:', el.className);
+            }
+            
+            return shouldMove;
         },
         action: (mouse, el) => {
             console.log('General move operation triggered for:', el.id, 'classes:', el.className);

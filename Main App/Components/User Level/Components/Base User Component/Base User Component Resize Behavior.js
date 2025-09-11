@@ -14,10 +14,24 @@
 
         console.log('Resize behavior attached to:', component.id);
 
-        // ✅ NEW: Updated event listener to match simplified Events Handler
-        component.addEventListener('startResize', (e) => {
-            const {mouse, handle} = e.detail;
-            handleResizeStart(component, mouse, handle);
+        // Handle resize initiation from Events Handler
+        component.addEventListener('startResizeOperation', (e) => {
+            const {mouse, edges} = e.detail;
+            
+            // Determine which handle should be active based on edges
+            let activeHandle = null;
+            if (edges.nearLeft && edges.nearTop) activeHandle = 'nw';
+            else if (edges.nearRight && edges.nearTop) activeHandle = 'ne';
+            else if (edges.nearLeft && edges.nearBottom) activeHandle = 'sw';
+            else if (edges.nearRight && edges.nearBottom) activeHandle = 'se';
+            else if (edges.nearTop) activeHandle = 'n';
+            else if (edges.nearBottom) activeHandle = 's';
+            else if (edges.nearRight) activeHandle = 'e';
+            else if (edges.nearLeft) activeHandle = 'w';
+            
+            if (activeHandle) {
+                handleResizeStart(component, mouse, activeHandle);
+            }
         });
 
         // Reactive event listeners - respond to Events Handler
@@ -29,6 +43,12 @@
             if (removeHandlesTimeout) {
                 clearTimeout(removeHandlesTimeout);
                 removeHandlesTimeout = null;
+            }
+            
+            // Check if handles already exist before trying to add them
+            const existingHandles = component.querySelectorAll('.resize-handle');
+            if (existingHandles.length > 0) {
+                return; // Handles already exist, no need to add
             }
             
             // Debounce add operation
@@ -84,14 +104,13 @@
     }
     
     function addResizeHandles(component) {
-        // Check if handles already exist
+        // Double-check that handles don't already exist
         const existingHandles = component.querySelectorAll('.resize-handle');
         if (existingHandles.length > 0) {
-            console.log('Resize handles already exist for:', component.id);
-            return;
+            return; // Silently return if handles already exist
         }
 
-        // Remove existing handles first
+        // Remove existing handles first (just in case)
         removeResizeHandles(component);
         
         // Determine which handles to add based on component classes

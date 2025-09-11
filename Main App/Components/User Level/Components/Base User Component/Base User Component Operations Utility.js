@@ -155,6 +155,29 @@
         element.style.top = finalTop + 'px';
     }
     
+    // === EDGE DETECTION UTILITIES ===
+    
+    /**
+     * Determines if mouse position is near component edges for resize detection
+     * @param {HTMLElement} element - Element to check against
+     * @param {number} mouseX - Mouse X coordinate
+     * @param {number} mouseY - Mouse Y coordinate
+     * @param {number} threshold - Distance threshold for "near" detection (default: 10px)
+     * @returns {boolean} - True if mouse is near any edge
+     */
+    function isNearComponentEdge(element, mouseX, mouseY, threshold = 10) {
+        const rect = element.getBoundingClientRect();
+        
+        // Calculate distances to each edge
+        const nearLeft = mouseX >= rect.left && mouseX <= rect.left + threshold;
+        const nearRight = mouseX >= rect.right - threshold && mouseX <= rect.right;
+        const nearTop = mouseY >= rect.top && mouseY <= rect.top + threshold;
+        const nearBottom = mouseY >= rect.bottom - threshold && mouseY <= rect.bottom;
+        
+        // Return true if near any edge
+        return nearLeft || nearRight || nearTop || nearBottom;
+    }
+    
     // === GALLERY UTILITIES ===
     
     /**
@@ -176,6 +199,9 @@
         applyOperationVisuals,
         clearOperationVisuals,
         updateElementPosition,
+        
+        // Edge detection utilities
+        isNearComponentEdge,
         
         // Gallery utilities
         clearGalleryReorderIndicators

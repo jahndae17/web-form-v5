@@ -15,14 +15,19 @@
         let addHandlesTimeout = null;
         let removeHandlesTimeout = null;
         
-        // NEW: Handle resize initiation from Events Handler
-        gallery.addEventListener('startResize', (e) => {
-            const {mouse, handle} = e.detail;
+        // Handle resize initiation from Events Handler
+        gallery.addEventListener('startResizeOperation', (e) => {
+            const {mouse, edges} = e.detail;
+            
+            // Determine which handle should be active based on edges
+            let activeHandle = null;
+            if (edges.nearRight) activeHandle = 'e';
+            else if (edges.nearLeft) activeHandle = 'w';
             
             // Only allow horizontal resize for galleries
-            if (handle.dataset.handle === 'e' || handle.dataset.handle === 'w') {
-                console.log('Starting gallery resize operation:', gallery.id, handle.dataset.handle);
-                window.EventsHandler.start('resize', gallery, handle.dataset.handle);
+            if (activeHandle) {
+                console.log('Starting gallery resize operation:', gallery.id, activeHandle);
+                window.EventsHandler.start('resize', gallery, activeHandle);
             }
         });
         
@@ -45,6 +50,13 @@
                 clearTimeout(removeHandlesTimeout);
                 removeHandlesTimeout = null;
             }
+            
+            // Check if handles already exist before trying to add them
+            const existingHandles = gallery.querySelectorAll('.resize-handle');
+            if (existingHandles.length > 0) {
+                return; // Handles already exist, no need to add
+            }
+            
             if (!addHandlesTimeout) {
                 addHandlesTimeout = setTimeout(() => {
                     addGalleryResizeHandles(gallery);
@@ -92,8 +104,12 @@
     }
 
     function addGalleryResizeHandles(gallery) {
+        // Double-check that handles don't already exist
         const existingHandles = gallery.querySelectorAll('.resize-handle');
-        if (existingHandles.length > 0) return;
+        if (existingHandles.length > 0) {
+            console.log('Resize handles already exist for:', gallery.id);
+            return;
+        }
         
         ['e', 'w'].forEach(handle => {
             const div = document.createElement('div');
