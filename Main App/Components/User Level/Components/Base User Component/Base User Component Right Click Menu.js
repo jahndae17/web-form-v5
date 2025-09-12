@@ -219,22 +219,6 @@
     // Auto-initialize when script loads
     initializeRightClickMenu();
     
-    // Listen for Events Handler notifications to close context menu
-    document.addEventListener('handleDeselect', (e) => {
-        // Only close if we're not clicking on the context menu itself
-        if (contextMenu && e.detail?.element && !contextMenu.contains(e.detail.element)) {
-            closeContextMenu();
-        }
-    });
-    
-    // Close context menu when a component is selected (clicking on a different component)
-    document.addEventListener('handleComponentSelect', (e) => {
-        // Only close if the selected component is different from our context menu target
-        if (contextMenu && e.detail?.element !== targetComponent) {
-            closeContextMenu();
-        }
-    });
-    
     // Re-initialize when new components are added using MutationObserver
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {

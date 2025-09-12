@@ -92,10 +92,11 @@
     <button id="togglePanel">&#9776;</button>
     <button id="togglePreview">Edit</button>
 
-    <script src="../Components/Developer%20Level/Handlers/Events%20Handler.js"></script>
-    <script src="../Components/Developer%20Level/Handlers/Inputs%20Handler.js"></script>
-    <script src="../Components/User%20Level/Components/Base%20User%20Component/Base%20User%20Component%20Factory.js"></script>
-    <script src="../Components/User%20Level/Components/Gallery%20Component/Gallery%20Component%20Factory.js"></script>
+    <script src="../Components/Developer Level/Handlers/Events Handler.js"></script>
+    <script src="../Components/Developer Level/Handlers/Inputs Handler.js"></script>
+    <script src="../Components/User Level/Components/Base User Component/Base User Component Factory.js"></script>
+    <script src="../Components/User Level/Components/Gallery Component/Gallery Component Factory.js"></script>
+    <script src="../Components/User Level/Components/Login Component/3rd Party Sign In/Third Party Sign In Factory.js"></script>
     <script>
         const togglePreview = document.getElementById('togglePreview');
 
@@ -174,6 +175,41 @@
                 console.log('Base User Component instance added to canvas');
             } else {
                 console.error('BaseUserComponentFactory not available');
+            }
+        });
+
+        // Add Unified Sign In button (All Providers)
+        const addUnifiedSignInButton = document.createElement('button');
+        addUnifiedSignInButton.textContent = 'Add Sign In Options';
+        addUnifiedSignInButton.style.position = 'static';
+        addUnifiedSignInButton.style.width = '100%';
+        addUnifiedSignInButton.style.padding = '5px';
+        addUnifiedSignInButton.style.margin = '5px 0';
+        addUnifiedSignInButton.style.backgroundColor = '#6c757d';
+        addUnifiedSignInButton.style.color = '#fff';
+        addUnifiedSignInButton.style.borderRadius = '5px';
+        addUnifiedSignInButton.style.fontSize = '12px';
+        addUnifiedSignInButton.style.border = 'none';
+        toolGallery.appendChild(addUnifiedSignInButton);
+
+        addUnifiedSignInButton.addEventListener('click', () => {
+            console.log('Add Unified Sign In button clicked');
+            if (window.ThirdPartySignInFactory) {
+                try {
+                    window.ThirdPartySignInFactory.createInstance('unified', {
+                        left: '220px',
+                        top: '70px',
+                        container: mainCanvas,
+                        enabledProviders: ['apple', 'google', 'microsoft', 'facebook'],
+                        buttonSize: '48px',
+                        buttonGap: '8px'
+                    });
+                    console.log('Unified Sign In component added to canvas');
+                } catch (error) {
+                    console.error('Failed to create Unified Sign In component:', error);
+                }
+            } else {
+                console.error('ThirdPartySignInFactory not available');
             }
         });
 

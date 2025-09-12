@@ -130,7 +130,7 @@ window.GalleryComponentFactory = {
         const behaviors = [
             'Base User Component Snapping Modifier.js',
             'Base User Component Selection Behavior.js',
-            'Gallery Component Reorder Behavior.js',
+            'Gallery Component Move Behavior.js',
             'Base User Component Nesting Behavior.js',
             'Gallery Child Resize Behavior.js'
         ];
@@ -160,12 +160,6 @@ window.GalleryComponentFactory = {
                     modifiedScript = modifiedScript.replace(
                         /const component = document\.querySelector\('\.base-user-component'\);/g,
                         `const component = document.getElementById('${childId}');`
-                    );
-                    
-                    // Handle gallery-specific selectors too
-                    modifiedScript = modifiedScript.replace(
-                        /const galleryChildren = document\.querySelectorAll\('\.base-user-component'\);/g,
-                        `const galleryChildren = [document.getElementById('${childId}')];`
                     );
                     
                     eval(modifiedScript);

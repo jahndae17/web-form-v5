@@ -10,27 +10,12 @@ function createMouseState(context, state) {
         deltaY: context['now'].y - (state.lastMousePos.y || context['now'].y),
         totalDeltaX: context['now'].x - context['on last mouse down'].x,
         totalDeltaY: context['now'].y - context['on last mouse down'].y,
+        isDragging: context['on last mouse down'].time > context['on last mouse up'].time,
         element: context['now'].element,
         rightClickJustHappened: isRecentClick(context, 2) && !state.rightClickProcessed,
         leftClickJustHappened: isRecentClick(context, 1) && !state.leftClickProcessed,
     };
-    
-    // Different drag detection for different purposes
-    const isMouseDown = context['on last mouse down'].time > context['on last mouse up'].time;
-    const hasMovement = Math.abs(mouse.totalDeltaX) > 3 || Math.abs(mouse.totalDeltaY) > 3;
-
-    // For move purposes, consider dragging as soon as mouse is down
-    mouse.isDragging = state.operation ? isMouseDown : (isMouseDown && hasMovement);
-    
-    // For deselection purposes, use stricter movement-based detection
-    mouse.isDraggingForDeselect = isMouseDown && hasMovement;
-
-    // For resize purposes, use laxer conditions
-    mouse.isDraggingForResize = isMouseDown;
-    
-    // Debug mouse state when dragging
-
-    mouse.justReleased = !isMouseDown && (Date.now() - context['on last mouse up'].time < 100);
+    mouse.justReleased = !mouse.isDragging && (Date.now() - context['on last mouse up'].time < 20);
     return mouse;
 }
 
@@ -54,218 +39,37 @@ const resizeRouting = {
     'base-user-component': 'startResize'
 };
 
-// === OPERATION ROUTING TABLE ===
-const operationRoutes = [
-    {
-        // RESIZE operations - HIGHEST PRIORITY (check edge proximity first)
-        condition: (el, context, mouse) => {
-            const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            
-            // Must be a base-user-component (includes gallery-child)
-            const isComponent = el.classList?.contains('base-user-component');
-            if (!isComponent) return false;
-            
-            // Check edge proximity first
-            const isNearEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
-            
-            const shouldResize = isComponent &&
-                   context['on last mouse down'].button === 0 &&
-                   mouse.isDraggingForResize && 
-                   !state.operation &&
-                   inputs?.['selectedElementList']?.[el.id] &&
-                   isNearEdge;
-                   
-            if (shouldResize) {
-                console.log('RESIZE route triggered for:', el.id, 'isNearEdge:', isNearEdge, 'isDraggingForResize:', mouse.isDraggingForResize);
-            }
-            
-            return shouldResize;
-        },
-        action: (mouse, el) => {
-            // Edge detection helper for resize handles
-            const rect = el.getBoundingClientRect();
-            const threshold = 10;
-            
-            const nearLeft = mouse.x < rect.left + threshold;
-            const nearRight = mouse.x > rect.right - threshold;
-            const nearTop = mouse.y < rect.top + threshold;
-            const nearBottom = mouse.y > rect.bottom - threshold;
-
-            // Send different events based on component type
-            if (el.classList.contains('gallery-child')) {
-                // Gallery children need special handling for vertical positioning
-                el.dispatchEvent(new CustomEvent('startGalleryResize', {
-                    detail: {mouse, edges: {nearLeft, nearRight, nearTop, nearBottom}}
-                }));
-            } else {
-                // Regular components use the standard event
-                el.dispatchEvent(new CustomEvent('startResizeOperation', {
-                    detail: {mouse, edges: {nearLeft, nearRight, nearTop, nearBottom}}
-                }));
-            }
-        }
-    },
-    {
-        // Gallery children move/reorder operations - LOWER PRIORITY
-        condition: (el, context, mouse) => {
-            const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            
-            // Only proceed if NOT near edge of child OR parent gallery (resize takes precedence)
-            const isNearChildEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
-            if (isNearChildEdge) return false; // Child resize takes precedence
-            
-            // Check if near parent gallery edge
-            const parentGallery = el.closest('.gallery-component');
-            if (parentGallery) {
-                const isNearParentEdge = OperationsUtility.isNearComponentEdge(parentGallery, mouse.x, mouse.y);
-                if (isNearParentEdge) return false; // Parent gallery resize takes precedence
-            }
-            
-            const shouldMove = el.classList?.contains('gallery-child') &&
-                   context['on last mouse down'].button === 0 &&
-                   mouse.isDragging && 
-                   !state.operation &&
-                   inputs?.['selectedElementList']?.[el.id];
-                   
-            if (shouldMove) {
-                console.log('GALLERY CHILD MOVE route triggered for:', el.id, 'isDragging:', mouse.isDragging);
-            }
-            
-            return shouldMove;
-        },
-        action: (mouse, el) => {
-            console.log('Gallery child move operation triggered for:', el.id);
-            el.dispatchEvent(new CustomEvent('startMoveOperation', {detail: mouse}));
-        }
-    },
-    {
-        // NESTING operations - LOWER PRIORITY
-        condition: (el, context, mouse) => {
-            const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            
-            // Only proceed if NOT near edge of element OR parent gallery (resize takes precedence)
-            const isNearElementEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
-            if (isNearElementEdge) return false; // Element resize takes precedence
-            
-            // Check if near parent gallery edge (if element is a gallery child)
-            const parentGallery = el.closest('.gallery-component');
-            if (parentGallery) {
-                const isNearParentEdge = OperationsUtility.isNearComponentEdge(parentGallery, mouse.x, mouse.y);
-                if (isNearParentEdge) return false; // Parent gallery resize takes precedence
-            }
-            
-            return el.classList?.contains('base-user-component') &&
-                   context['on last mouse down'].button === 0 &&
-                   mouse.isDragging && 
-                   !state.operation &&
-                   inputs?.['selectedElementList']?.[el.id] &&
-                   el.classList.contains('isNestable');
-        },
-        action: (mouse, el) => {
-            el.dispatchEvent(new CustomEvent('startNestingOperation', {detail: mouse}));
-        }
-    },
-    {
-        // GENERAL MOVE operations - LOWEST PRIORITY
-        condition: (el, context, mouse) => {
-            const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            
-            // Only proceed if NOT near edge of element OR parent gallery (resize takes precedence)
-            const isNearElementEdge = OperationsUtility.isNearComponentEdge(el, mouse.x, mouse.y);
-            if (isNearElementEdge) return false; // Element resize takes precedence
-            
-            // Check if near parent gallery edge (if element is a gallery child)
-            const parentGallery = el.closest('.gallery-component');
-            if (parentGallery) {
-                const isNearParentEdge = OperationsUtility.isNearComponentEdge(parentGallery, mouse.x, mouse.y);
-                if (isNearParentEdge) return false; // Parent gallery resize takes precedence
-            }
-            
-            const shouldMove = el.classList?.contains('base-user-component') &&
-                   context['on last mouse down'].button === 0 &&
-                   mouse.isDragging && 
-                   !state.operation &&
-                   inputs?.['selectedElementList']?.[el.id];
-                   
-            if (shouldMove) {
-                console.log('GENERAL MOVE route triggered for:', el.id, 'isDragging:', mouse.isDragging, 'classes:', el.className);
-            }
-            
-            return shouldMove;
-        },
-        action: (mouse, el) => {
-            console.log('General move operation triggered for:', el.id, 'classes:', el.className);
-            el.dispatchEvent(new CustomEvent('startMoveOperation', {detail: mouse}));
-        }
-    }
-];
-
-// === HOVER ROUTING TABLE ===
-const hoverRoutes = [
-    {
-        condition: (el, context, mouse) => {
-            const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
-            return el.classList?.contains('base-user-component') &&
-                   !state.operation &&
-                   inputs?.['selectedElementList']?.[el.id];
-        },
-        action: (mouse, el) => {
-            // Edge detection for hover-based resize handle display
-            const rect = el.getBoundingClientRect();
-            const threshold = 10;
-            
-            const nearLeft = mouse.x < rect.left + threshold;
-            const nearRight = mouse.x > rect.right - threshold;
-            const nearTop = mouse.y < rect.top + threshold;
-            const nearBottom = mouse.y > rect.bottom - threshold;
-            const isNearEdge = nearLeft || nearRight || nearTop || nearBottom;
-
-            // Show/hide resize handles based on hover
-            el.dispatchEvent(new CustomEvent(isNearEdge ? 'showResizeHandles' : 'hideResizeHandles'));
-        }
-    }
-];
-
-// === INTERACTION ROUTING TABLE ===
+// === ROUTING TABLE ===
 const interactionRoutes = [
     {
-        condition: (el, context, mouse) => el.classList?.contains('resize-handle'),
+        condition: (el) => el.classList?.contains('resize-handle'),
         action: (mouse, el) => {
             const component = el.closest('.base-user-component');
             if (!component) return;
             
-            // Determine edge information from handle class
-            const handleClass = el.className.split(' ').find(cls => cls !== 'resize-handle');
-            const edges = {
-                nearLeft: handleClass?.includes('w'),
-                nearRight: handleClass?.includes('e'), 
-                nearTop: handleClass?.includes('n'),
-                nearBottom: handleClass?.includes('s')
-            };
+            const eventName = Object.entries(resizeRouting)
+                .find(([cls]) => component.classList.contains(cls))?.[1] 
+                || 'startResize';
             
-            // Dispatch the new operation event that works with our routing system
-            component.dispatchEvent(new CustomEvent('startResizeOperation', {
-                detail: {mouse, edges}
+            component.dispatchEvent(new CustomEvent(eventName, {
+                detail: {mouse, handle: el}
             }));
         }
     },
     {
-        condition: (el, context, mouse) => {
-            return el.classList?.contains('base-user-component') &&
-            context['on last mouse down'].button === 0;
-        },
+        condition: (el, context) => el.classList?.contains('base-user-component') && 
+                                   context['on last mouse down'].button === 0,
         action: (mouse, el) => el.dispatchEvent(new CustomEvent('handleComponentSelect', {detail: mouse}))
     },
-    {
-        condition: (el, context, mouse) => {
-            const isCanvas = el.id === 'mainCanvas';
-            const recentClick = isRecentClick(context, 0);
-            return isCanvas && recentClick && !state.leftClickProcessed;
-        },
+    /*  condition: (el, context) => (el.classList?.contains('base-user-component') || el.closest('.base-user-component')) && 
+                                   context['on last mouse down'].button === 0,
         action: (mouse, el) => {
-            document.dispatchEvent(new CustomEvent('handleDeselect', {detail: mouse}));
-            state.leftClickProcessed = true; // Mark as processed to prevent multiple triggers
-        }
+            const component = el.classList?.contains('base-user-component') ? el : el.closest('.base-user-component');
+            component.dispatchEvent(new CustomEvent('handleComponentSelect', {detail: mouse}));
+        }*/ //This fixes the unified sign in component selection issue, but it shouldn't because we should be able to select the space between components
+    {
+        condition: (el) => el.id === 'mainCanvas',
+        action: (mouse, el) => document.dispatchEvent(new CustomEvent('handleDeselect', {detail: mouse}))
     }
 ];
 
@@ -313,26 +117,11 @@ setInterval(() => {
         resetState();
     }
     
-    // Route new interactions and operations using tables
+    // Route new interactions using table
     if (!state.operation && mouse.element) {
-        // First check for operation routes (resize/move/nesting) - only when dragging
-        const operationRoute = operationRoutes.find(r => r.condition(mouse.element, context, mouse));
-        if (operationRoute) {
-            operationRoute.action(mouse, mouse.element);
-        } else {
-            // Then check for interaction routes (selection, deselection, etc.)
-            const interactionRoute = interactionRoutes.find(r => r.condition(mouse.element, context, mouse));
-            interactionRoute?.action(mouse, mouse.element) || 
-                document.dispatchEvent(new CustomEvent('handleElementLeave', {detail: mouse}));
-        }
-    }
-
-    // Always check hover routes for resize handle display (regardless of operation state)
-    if (mouse.element) {
-        const hoverRoute = hoverRoutes.find(r => r.condition(mouse.element, context, mouse));
-        if (hoverRoute) {
-            hoverRoute.action(mouse, mouse.element);
-        }
+        const route = interactionRoutes.find(r => r.condition(mouse.element, context));
+        route?.action(mouse, mouse.element) || 
+            document.dispatchEvent(new CustomEvent('handleElementLeave', {detail: mouse}));
     }
     
     state.lastMousePos = { x: mouse.x, y: mouse.y };

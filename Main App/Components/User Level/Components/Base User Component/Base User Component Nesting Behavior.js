@@ -39,11 +39,6 @@
 
     // ✅ UPDATED: Parameter name changed from liveMouse to mouse
     function updateLiveNesting(element, mouse) {
-        // Skip gallery children - they have their own nesting behavior
-        if (element.classList.contains('gallery-child')) {
-            return;
-        }
-        
         // Clear previous highlights
         clearNestingHighlights();
         
@@ -56,30 +51,45 @@
             potentialTarget.dataset.nestingTarget = 'true';
         }
         
-        // Update dragged element position - drag offset should already be set by startNestingOperation
-        // If not set, something went wrong - don't calculate it here
-        if (!element.dataset.dragOffset) {
-            console.warn('Drag offset not set for nesting operation:', element.id);
-            return;
+        // Update dragged element position using direct mouse-to-component calculation
+        // Get the offset from mouse to component ONLY on first frame of drag
+        if (!element.dataset.dragOffset && mouse.isDragging) {
+            const rect = element.getBoundingClientRect();
+            element.dataset.dragOffset = JSON.stringify({
+                x: mouse.x - rect.left,
+                y: mouse.y - rect.top
+            });
         }
         
-        // Calculate component position using centralized utility
-        const position = window.OperationsUtility.calculateDragPosition(mouse, element);
-        if (position) {
-            window.OperationsUtility.updateElementPosition(element, position, true);
+        // Calculate component position based on current mouse and original offset
+        if (element.dataset.dragOffset) {
+            const dragOffset = JSON.parse(element.dataset.dragOffset);
+            
+            // Calculate desired component position: nowMouseX - dragOffsetX
+            const desiredLeft = mouse.x - dragOffset.x;
+            const desiredTop = mouse.y - dragOffset.y;
+            
+            // Apply snapping to the component position
+            let finalLeft = desiredLeft;
+            let finalTop = desiredTop;
+            
+            if (typeof window.applySnapping === 'function') {
+                const snapped = window.applySnapping(desiredLeft, desiredTop, false);
+                finalLeft = snapped.x;
+                finalTop = snapped.y;
+            }
+            
+            element.style.left = finalLeft + 'px';
+            element.style.top = finalTop + 'px';
         }
-        
-        // Apply visual feedback for nesting operation
-        window.OperationsUtility.applyOperationVisuals(element, 'nesting');
+        element.style.transform = 'scale(1.05)';
+        element.style.boxShadow = '0 8px 16px rgba(0, 150, 255, 0.4)';
+        element.style.border = '2px dashed #0096ff';
+        element.style.opacity = '0.8';
     }
 
     // ✅ UPDATED: Parameter names and structure
     function handleNestingCompletion(element, mouse) {
-        // Skip gallery children - they have their own nesting completion behavior
-        if (element.classList.contains('gallery-child')) {
-            return;
-        }
-        
         // Get inputs from handler data since it's not passed in event anymore
         const inputs = window.handlerData?.['shared handler data']?.[0]?.inputs;
         
@@ -208,14 +218,22 @@
     }
 
     function cleanupNestingVisuals(element) {
-        // Skip gallery children - they have their own cleanup behavior
-        if (element.classList.contains('gallery-child')) {
-            return;
-        }
+        element.style.transform = '';
+        element.style.boxShadow = '';
+        element.style.opacity = '';
         
-        // Clear operation visuals and drag offsets using centralized utility
-        window.OperationsUtility.clearOperationVisuals(element, true);
-        window.OperationsUtility.clearDragOffsets(element);
+        // Clear drag offset when nesting completes
+        delete element.dataset.dragOffset;
+        
+        // Only clear nesting-specific border (dashed), preserve selection border
+        if (element.style.border.includes('dashed')) {
+            // Restore selection border if element is selected
+            if (element.classList.contains('selected')) {
+                element.style.border = '2px solid #007ACC';
+            } else {
+                element.style.border = '';
+            }
+        }
         
         console.log('Nesting visuals cleaned up for:', element.id);
     }

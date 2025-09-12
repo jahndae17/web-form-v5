@@ -8,36 +8,16 @@
     }
 
     components.forEach(component => {
-        // Skip if already initialized OR if it's a gallery child
-        if (component.dataset.resizeBehaviorInitialized || component.classList.contains('gallery-child')) return;
+        // Skip if already initialized
+        if (component.dataset.resizeBehaviorInitialized) return;
         component.dataset.resizeBehaviorInitialized = 'true';
 
         console.log('Resize behavior attached to:', component.id);
 
-        // Handle resize initiation from Events Handler
-        component.addEventListener('startResizeOperation', (e) => {
-            // Double-check that this isn't a gallery child (in case class was added after initialization)
-            if (component.classList.contains('gallery-child')) {
-                console.log('Ignoring resize for gallery child:', component.id);
-                return;
-            }
-            
-            const {mouse, edges} = e.detail;
-            
-            // Determine which handle should be active based on edges
-            let activeHandle = null;
-            if (edges.nearLeft && edges.nearTop) activeHandle = 'nw';
-            else if (edges.nearRight && edges.nearTop) activeHandle = 'ne';
-            else if (edges.nearLeft && edges.nearBottom) activeHandle = 'sw';
-            else if (edges.nearRight && edges.nearBottom) activeHandle = 'se';
-            else if (edges.nearTop) activeHandle = 'n';
-            else if (edges.nearBottom) activeHandle = 's';
-            else if (edges.nearRight) activeHandle = 'e';
-            else if (edges.nearLeft) activeHandle = 'w';
-            
-            if (activeHandle) {
-                handleResizeStart(component, mouse, activeHandle);
-            }
+        // ✅ NEW: Updated event listener to match simplified Events Handler
+        component.addEventListener('startResize', (e) => {
+            const {mouse, handle} = e.detail;
+            handleResizeStart(component, mouse, handle);
         });
 
         // Reactive event listeners - respond to Events Handler
@@ -49,12 +29,6 @@
             if (removeHandlesTimeout) {
                 clearTimeout(removeHandlesTimeout);
                 removeHandlesTimeout = null;
-            }
-            
-            // Check if handles already exist before trying to add them
-            const existingHandles = component.querySelectorAll('.resize-handle');
-            if (existingHandles.length > 0) {
-                return; // Handles already exist, no need to add
             }
             
             // Debounce add operation
@@ -110,13 +84,14 @@
     }
     
     function addResizeHandles(component) {
-        // Double-check that handles don't already exist
+        // Check if handles already exist
         const existingHandles = component.querySelectorAll('.resize-handle');
         if (existingHandles.length > 0) {
-            return; // Silently return if handles already exist
+            console.log('Resize handles already exist for:', component.id);
+            return;
         }
 
-        // Remove existing handles first (just in case)
+        // Remove existing handles first
         removeResizeHandles(component);
         
         // Determine which handles to add based on component classes
@@ -213,20 +188,14 @@
                 let newLeft = startPosition.left + deltaX;
                 let newTop = startPosition.top + deltaY;
                 
-                // Apply coordinated snapping for corner handles
+                // Apply snapping to dimensions and position
                 if (typeof window.applySnapping === 'function') {
-                    // For corner handles, calculate the bottom-right corner first
-                    const rightEdge = startPosition.left + startPosition.width;
-                    const bottomEdge = startPosition.top + startPosition.height;
-                    
-                    // Snap the new top-left position
+                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
                     const snappedPos = window.applySnapping(newLeft, newTop, false);
+                    newWidth = snappedSize.x;
+                    newHeight = snappedSize.y;
                     newLeft = snappedPos.x;
                     newTop = snappedPos.y;
-                    
-                    // Calculate dimensions from snapped position to maintain bottom-right
-                    newWidth = rightEdge - newLeft;
-                    newHeight = bottomEdge - newTop;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -239,19 +208,13 @@
                 let newHeight = startPosition.height - deltaY;
                 let newTop = startPosition.top + deltaY;
                 
-                // Apply coordinated snapping for corner handles
+                // Apply snapping to dimensions and position
                 if (typeof window.applySnapping === 'function') {
-                    // Calculate the right edge and snap top position
-                    const rightEdge = startPosition.left + newWidth;
-                    const bottomEdge = startPosition.top + startPosition.height;
-                    
-                    // Snap the right edge and top position
-                    const snappedRight = window.applySnapping(rightEdge, 0, false);
-                    const snappedTop = window.applySnapping(0, newTop, false);
-                    
-                    newWidth = snappedRight.x - startPosition.left;
-                    newTop = snappedTop.y;
-                    newHeight = bottomEdge - newTop;
+                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
+                    const snappedPos = window.applySnapping(startPosition.left, newTop, false);
+                    newWidth = snappedSize.x;
+                    newHeight = snappedSize.y;
+                    newTop = snappedPos.y;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -263,19 +226,13 @@
                 let newHeight = startPosition.height + deltaY;
                 let newLeft = startPosition.left + deltaX;
                 
-                // Apply coordinated snapping for corner handles
+                // Apply snapping to dimensions and position
                 if (typeof window.applySnapping === 'function') {
-                    // Calculate the right edge and bottom edge
-                    const rightEdge = startPosition.left + startPosition.width;
-                    const bottomEdge = startPosition.top + newHeight;
-                    
-                    // Snap the left position and bottom edge
-                    const snappedLeft = window.applySnapping(newLeft, 0, false);
-                    const snappedBottom = window.applySnapping(0, bottomEdge, false);
-                    
-                    newLeft = snappedLeft.x;
-                    newWidth = rightEdge - newLeft;
-                    newHeight = snappedBottom.y - startPosition.top;
+                    const snappedSize = window.applySnapping(newWidth, newHeight, false);
+                    const snappedPos = window.applySnapping(newLeft, startPosition.top, false);
+                    newWidth = snappedSize.x;
+                    newHeight = snappedSize.y;
+                    newLeft = snappedPos.x;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -286,13 +243,11 @@
                 let newWidth = startPosition.width + deltaX;
                 let newHeight = startPosition.height + deltaY;
                 
-                // Apply snapping to the bottom-right corner
+                // Apply snapping to dimensions
                 if (typeof window.applySnapping === 'function') {
-                    const rightEdge = startPosition.left + newWidth;
-                    const bottomEdge = startPosition.top + newHeight;
-                    const snapped = window.applySnapping(rightEdge, bottomEdge, false);
-                    newWidth = snapped.x - startPosition.left;
-                    newHeight = snapped.y - startPosition.top;
+                    const snapped = window.applySnapping(newWidth, newHeight, false);
+                    newWidth = snapped.x;
+                    newHeight = snapped.y;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -302,12 +257,12 @@
                 let newHeight = startPosition.height - deltaY;
                 let newTop = startPosition.top + deltaY;
                 
-                // Apply coordinated snapping for edge handles
+                // Apply snapping to dimension and position
                 if (typeof window.applySnapping === 'function') {
-                    const bottomEdge = startPosition.top + startPosition.height;
-                    const snappedTop = window.applySnapping(0, newTop, false);
-                    newTop = snappedTop.y;
-                    newHeight = bottomEdge - newTop;
+                    const snappedSize = window.applySnapping(startPosition.width, newHeight, false);
+                    const snappedPos = window.applySnapping(startPosition.left, newTop, false);
+                    newHeight = snappedSize.y;
+                    newTop = snappedPos.y;
                 }
                 
                 element.style.height = `${newHeight}px`;
@@ -316,11 +271,10 @@
             's': () => {
                 let newHeight = startPosition.height + deltaY;
                 
-                // Apply snapping to bottom edge
+                // Apply snapping to dimension
                 if (typeof window.applySnapping === 'function') {
-                    const bottomEdge = startPosition.top + newHeight;
-                    const snapped = window.applySnapping(0, bottomEdge, false);
-                    newHeight = snapped.y - startPosition.top;
+                    const snapped = window.applySnapping(startPosition.width, newHeight, false);
+                    newHeight = snapped.y;
                 }
                 
                 element.style.height = `${newHeight}px`;
@@ -328,11 +282,10 @@
             'e': () => {
                 let newWidth = startPosition.width + deltaX;
                 
-                // Apply snapping to right edge
+                // Apply snapping to dimension
                 if (typeof window.applySnapping === 'function') {
-                    const rightEdge = startPosition.left + newWidth;
-                    const snapped = window.applySnapping(rightEdge, 0, false);
-                    newWidth = snapped.x - startPosition.left;
+                    const snapped = window.applySnapping(newWidth, startPosition.height, false);
+                    newWidth = snapped.x;
                 }
                 
                 element.style.width = `${newWidth}px`;
@@ -341,12 +294,12 @@
                 let newWidth = startPosition.width - deltaX;
                 let newLeft = startPosition.left + deltaX;
                 
-                // Apply coordinated snapping for edge handles
+                // Apply snapping to dimension and position
                 if (typeof window.applySnapping === 'function') {
-                    const rightEdge = startPosition.left + startPosition.width;
-                    const snappedLeft = window.applySnapping(newLeft, 0, false);
-                    newLeft = snappedLeft.x;
-                    newWidth = rightEdge - newLeft;
+                    const snappedSize = window.applySnapping(newWidth, startPosition.height, false);
+                    const snappedPos = window.applySnapping(newLeft, startPosition.top, false);
+                    newWidth = snappedSize.x;
+                    newLeft = snappedPos.x;
                 }
                 
                 element.style.width = `${newWidth}px`;

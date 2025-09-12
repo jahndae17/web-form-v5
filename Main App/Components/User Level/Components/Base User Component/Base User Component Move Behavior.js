@@ -27,37 +27,53 @@
     });
 
     function updateLiveMove(element, liveMouse) {
-        // Skip gallery children - they have their own move behavior
-        if (element.classList.contains('gallery-child')) {
-            return;
+        // Get the offset from mouse to component ONLY on first frame of drag
+        if (!element.dataset.dragOffset && liveMouse.isDragging) {
+            const rect = element.getBoundingClientRect();
+            element.dataset.dragOffset = JSON.stringify({
+                x: liveMouse.x - rect.left,
+                y: liveMouse.y - rect.top
+            });
+            console.log('Drag offset set for:', element.id);
         }
         
-        // The drag offset should already be set by startMoveOperation
-        // If not set, something went wrong - don't calculate it here
-        if (!element.dataset.dragOffset) {
-            console.warn('Drag offset not set for move operation:', element.id);
-            return;
+        // Calculate component position based on current mouse and original offset
+        if (element.dataset.dragOffset) {
+            const dragOffset = JSON.parse(element.dataset.dragOffset);
+            
+            // Calculate desired component position: nowMouseX - dragOffsetX
+            const desiredLeft = liveMouse.x - dragOffset.x;
+            const desiredTop = liveMouse.y - dragOffset.y;
+            
+            // Apply snapping to the component position
+            let finalLeft = desiredLeft;
+            let finalTop = desiredTop;
+            
+            if (typeof window.applySnapping === 'function') {
+                const snapped = window.applySnapping(desiredLeft, desiredTop, false);
+                finalLeft = snapped.x;
+                finalTop = snapped.y;
+            }
+            
+            element.style.left = finalLeft + 'px';
+            element.style.top = finalTop + 'px';
         }
         
-        // Calculate component position using centralized utility
-        const position = window.OperationsUtility.calculateDragPosition(liveMouse, element);
-        if (position) {
-            window.OperationsUtility.updateElementPosition(element, position, true);
-        }
-        
-        // Apply visual feedback for move operation
-        window.OperationsUtility.applyOperationVisuals(element, 'move');
+        element.style.transform = 'scale(1.02)';
+        element.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.3)';
     }
 
     function cleanup(element) {
-        // Skip gallery children - they have their own cleanup behavior
-        if (element.classList.contains('gallery-child')) {
-            return;
-        }
+        element.style.transform = '';
+        element.style.boxShadow = '';
         
-        // Clear operation visuals and drag offsets using centralized utility
-        window.OperationsUtility.clearOperationVisuals(element, true);
-        window.OperationsUtility.clearDragOffsets(element);
+        // Clear drag offset when move completes
+        delete element.dataset.dragOffset;
+        
+        // Preserve selection visuals after move cleanup
+        if (element.classList.contains('selected')) {
+            element.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
+        }
         
         console.log('Move visuals cleaned up for:', element.id);
     }
